@@ -25,7 +25,13 @@ void user_isr(void)
 {
   return;
 }
-
+void setPixel(int x, int y, char value)
+{
+    int blockPosition = x + ((y / 8) * 128);
+    char block = icon[blockPosition];
+    block |= 1 << (y % 8);
+    icon[blockPosition] = block;
+}
 /* Lab-specific initialization goes here */
 void labinit(void)
 {
@@ -100,4 +106,5 @@ void labwork(void)
     tick(&mytime);
     *p_led = *p_led + 0x1; // lägger till 1 dit led pekar dvs ökar så en till lampa lyser index 0-7 är lampor
   }
+  setPixel(1,1,0);
 }
