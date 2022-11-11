@@ -22,6 +22,7 @@ static void num32asc(char *s, int);
 
 #define DISPLAY_TURN_OFF_VDD (PORTFSET = 0x40)
 #define DISPLAY_TURN_OFF_VBAT (PORTFSET = 0x20)
+extern  uint8_t  icon[512];
 
 /* quicksleep:
    A simple function to create a small delay.
@@ -180,8 +181,12 @@ void display_image(int x, const uint8_t *data)
 
 void display_update(void)
 {
-  int i, j, k;
+  int i, j, k,index;
   int c;
+  for(index = 0; index<512;index++)
+  {
+    icon[index] = 0;
+  }
   for (i = 0; i < 4; i++)
   {
     DISPLAY_CHANGE_TO_COMMAND_MODE;
