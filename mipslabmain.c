@@ -56,11 +56,12 @@ int main(void) {
 	
 	display_init();
 
-	labinit(); /* Do any lab-specific initialization */
+	start();
 
 	while( 1 )
 	{
-	  labwork(); /* Do lab-specific things again and again */
+	  update();
 	}
+
 	return 0;
 }
