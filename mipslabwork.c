@@ -17,7 +17,7 @@ char textstring[] = "text, more text, and even more text!";
 /* Interrupt Service Routine */
 void user_isr(void)
 {
-    if (IFS(0))
+   /* if (IFS(0))
   {
     IFSCLR(0) = 0x100;
     count++;
@@ -28,7 +28,7 @@ void user_isr(void)
     tick(&mytime);
     display_update();
     }
-  }
+  }*/
   return;
 }
 
@@ -76,17 +76,17 @@ void update(void)
     shouldUpdate = 1;
   }
 
-  /*if (IFS(0)) //& 0x080
+  if (IFS(0)) //& 0x080
   {
     IFSCLR(0) = 0xFFFFFFFF; //clear interupt måste cleara alla vet ej varför? ska bara vara en bit egentlien
     count++;
   }
-  */
+  
   
   clearScreen();
   drawGraphic(1, 5, 8, 11, player_default);
   display_image(0, screen_data);
-/*
+
   if (count == 10)
   {
     count = 0;
@@ -95,5 +95,5 @@ void update(void)
 
     display_update();
   }
-  */
+  
 }
