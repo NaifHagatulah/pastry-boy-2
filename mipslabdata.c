@@ -210,6 +210,11 @@ uint8_t screen_data[] =
 	0, 0, 0, 0, 0, 0, 0, 0, 
 };
 
+uint8_t imageSizes[][2] =
+{
+	{ 8, 11 },
+};
+
 char player_default[] = 
 { 
     0, 0, 0, 1, 1, 0, 0, 0,
@@ -224,3 +229,5 @@ char player_default[] =
     0, 0, 1, 0, 0, 1, 0, 0,
     0, 0, 1, 1, 0, 1, 1, 0, 
 };
+
+char* images[] = { player_default, player_default };

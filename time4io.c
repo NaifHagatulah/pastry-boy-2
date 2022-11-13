@@ -14,3 +14,8 @@ int getbtns()
 {
     return (PORTD >> 5) & 0x7;
 }
+
+int getbtn1()
+{
+    return (PORTF) & 0x2;
+}

@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "mipslab.h": "c"
+        "mipslab.h": "c",
+        "gameobject.h": "c"
     }
 }

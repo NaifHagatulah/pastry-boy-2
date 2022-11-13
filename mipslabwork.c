@@ -2,6 +2,7 @@
 #include <pic32mx.h> /* Declarations of system-specific addresses etc */
 #include "mipslab.h" /* Declatations for these labs */
 #include "drawingFunctions.h"
+#include "GameObject.h"
 
 unsigned int tickValue = 0x1;
 volatile int *trise = (volatile int *)0xbf886100;
@@ -10,10 +11,9 @@ int ticks = 0;
 int displayUpdateCounter = 0;
 extern uint8_t screen_data[512];
 extern char player_default[88];
+GameObject player;
 
-double x_position = 5;
-
-char textstring[] = "text, more text, and even more text!";
+GameObject gameObjects[1];
 
 void user_isr(void)
 {
@@ -46,21 +46,32 @@ void start(void)
   *porte = 0xff;
 
   TRISD |= 0x7f;
-  return;
+  TRISF |= 0x2;
+
+  player.xPosition = 5;
+  player.yPosition = 5;
+
+  gameObjects[0] = player;
 }
 
 void game_update(void) //will run every time the timer ticks
 {
   int buttons = getbtns();
+  int btn1 = getbtn1();
+
+  if(btn1 & 0x2)
+  {
+    player.xPosition += 0.7;
+  }
 
   if (buttons & 0x1) //button 1 is pressed
   {
-    x_position += 0.02;   
+    player.xPosition += 0.02;   
   }
 
   if (buttons & 0x2) //button 2 is pressed
   {
-    x_position -= 0.02;   
+    player.xPosition -= 0.02;   
   }
 
   if (buttons & 0x4) //button 3 is pressed
@@ -87,7 +98,7 @@ void master_update(void)
   IFSCLR(0) = 0x100;
   
   clearScreen();
-  drawGraphic((int)x_position, 5, 8, 11, player_default);  
+  drawGraphic((int)player.xPosition, 5, 8, 11, player_default);  
 
   if (displayUpdateCounter == 100)
   {

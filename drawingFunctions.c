@@ -1,6 +1,33 @@
 #include <stdint.h>
+#include "GameObject.h"
 
 extern uint8_t screen_data[512];
+extern uint8_t imageSizes[][2];
+extern char* images[];
+
+struct GameObjectStruct
+{
+  double xPosition;
+  double yPosition;
+  double xVelocity;
+  double yVelocity;
+  int graphicIndex;
+};
+
+typedef struct GameObjectStruct GameObject;
+
+struct card
+{
+    int face; // define pointer face
+}; // end structure card
+
+
+typedef struct card Card ;
+
+void passByReference(Card *c) ;
+
+void face(car)
+
 
 void setPixel(int x, int y, char value)
 {
@@ -41,4 +68,9 @@ void drawGraphic(int x, int y, int width, int height, char* graphic)
       setPixel(x + i, (y + height) - j, graphic[i + j * (width)]);
     }  
   } 
+}
+
+void drawGameObject(GameObject *gameObject)
+{
+  drawGraphic((int)gameObject->xPosition, (int)gameObject->yPosition, imageSizes[gameObject->graphicIndex][0], imageSizes[gameObject->graphicIndex][1], images[gameObject->graphicIndex]);  
 }
