@@ -60,7 +60,7 @@ int main(void) {
 
 	while( 1 )
 	{
-	  update();
+	  master_update();
 	}
 
 	return 0;
