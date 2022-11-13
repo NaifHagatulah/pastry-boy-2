@@ -38,7 +38,7 @@ void start(void)
   PR2 = (80000000 / 256) / 10;                      // sätter period
   TMR2 = 0;                                         // nollar timer 2
   IECSET(0) = 0x00000100;                           // sätter så interupt är enable på timer 2
-  IPCSET(2) = 0b11111;                              // sätter prioritet priritet 3 och sub prio 1
+  IPCSET(0) = 0b11111;                              // sätter prioritet priritet 3 och sub prio 1
   enable_interrupt();                               // sätter interupt global
   T2CONSET = 0x8000;                                // aktiverar timer 2
 
