@@ -50,8 +50,9 @@ void start(void)
 
   player.xPosition = 5;
   player.yPosition = 5;
+  player.graphicIndex = 0;
 
-  gameObjects[0] = player;
+  //gameObjects[0] = player;
 }
 
 void game_update(void) //will run every time the timer ticks
@@ -98,7 +99,8 @@ void master_update(void)
   IFSCLR(0) = 0x100;
   
   clearScreen();
-  drawGraphic((int)player.xPosition, 5, 8, 11, player_default);  
+  drawGameObject(player);
+  //drawGraphic((int)player.xPosition, 5, 8, 11, player_default);  
 
   if (displayUpdateCounter == 100)
   {

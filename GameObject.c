@@ -1,4 +1,4 @@
-typedef struct g
+typedef struct GameObject
 {
   double xPosition;
   double yPosition;
