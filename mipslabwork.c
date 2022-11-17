@@ -53,6 +53,8 @@ void LoadScene(int level, int scene)
   
   player = &gameObjects[0];
 
+  player->yVelocity = 0;
+
   int i;
   for (i = 0; i < gameObjectsLength; i++) //render to background
   {
@@ -74,7 +76,7 @@ void start(void)
   T2CONSET = 0x8000;                                // aktiverar timer 2
 
   *trise = 0x00;
-  *porte = 0xff;
+  //*porte = 0xff;
 
   TRISD |= 0x7f;
   TRISF |= 0x2;
@@ -122,7 +124,10 @@ void draw_update(void) //will run every 100th time timer ticks
       drawGameObject(&gameObjects[i], 0);
   }
 
-  displayUpdateCounter = 0;
+  if(displayUpdateCounter == 2000000)
+  {
+    displayUpdateCounter = 0; 
+  }
   display_image(0, screen_data); //draw image to screen
 }
 
@@ -136,12 +141,16 @@ void master_update(void)
   game_update();
   IFSCLR(0) = 0x100;
 
-  if (displayUpdateCounter == 100)
+  if ((displayUpdateCounter % 100) == 0)
   {
-    apply_physics();
-    find_collisions();
-    handle_collisions();
     draw_update();
+    apply_physics();
+    
+    if((displayUpdateCounter % 20000) == 0)
+    {
+      find_collisions();
+      handle_collisions();
+    }
   }
 }
 
@@ -168,11 +177,11 @@ void find_collisions()
   for(i = 0; i < gameObjectsLength; i++)
   {
     if(gameObjects[i].usePhysics == 1)
-    {
+    {    
       int j = 0;
       for(j = 0; j < gameObjectsLength; j++)
       {
-        collisionsLength += get_collision(gameObjects[i], gameObjects[j], collisions[collisionsLength]);
+        collisionsLength += get_collision(&gameObjects[i], &gameObjects[j], &collisions[collisionsLength]);
       }
     }
   }
@@ -190,6 +199,9 @@ int get_collision(GameObject *object1, GameObject *object2, Collision *collision
   double otherTop = object2->yPosition + getGameObjectHeight(object2);
   double otherBottom = object2->yPosition;
   
+  //*porte += 1;
+  *porte |= object1->graphicIndex + object2->graphicIndex;
+
   if (otherLeft >= thisLeft && otherLeft <= thisRight && otherRight >= thisRight)
   {
       double xOverlap = thisRight - otherLeft;
@@ -280,11 +292,13 @@ int get_collision(GameObject *object1, GameObject *object2, Collision *collision
 
 void handle_collisions()
 {
+  *porte = collisionsLength;
+
   int i = 0;
   for (i = 0; i < collisionsLength; i++)
   {
     collisions[i].objectOne->yVelocity = 0;
     collisions[i].objectTwo->yVelocity = 0;
-    collisions[i].objectOne->yPosition = collisions[i].yPosition + collisions[i].height;
+    collisions[i].objectOne->yPosition = collisions[i].height + 1;
   }
 }
