@@ -28,6 +28,7 @@ void LoadLevelScene(GameObject sceneArray[], int level, int scene)
         if(number == 1)
         {
             sceneArray[index].graphicIndex = 0; // 0 is player default
+            sceneArray[index].usePhysics = 1;
         }
         else if(number == 2)
         {

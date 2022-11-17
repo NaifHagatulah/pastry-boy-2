@@ -324,6 +324,7 @@ uint8_t imageSizes[][2] =
 {
 	{ 8, 11 },
 	{ 8, 4 },
+	{ 8, 6}
 };
 
 char player_default[] = 
@@ -349,4 +350,14 @@ char baby_block_01[] =
 	1, 1, 1, 1, 1, 1, 1, 1,
 };
 
-char* images[] = { player_default, baby_block_01 };
+char small_dog[] =
+{
+	0, 0, 1, 0, 0, 0, 0, 0,
+	1, 1, 1, 0, 0, 0, 0, 1,
+	0, 1, 1, 1, 1, 1, 1, 0,
+	1, 1, 1, 1, 1, 1, 1, 0,
+	0, 0, 0, 1, 0, 0, 1, 0,
+	0, 0, 1, 1, 0, 1, 1, 0,
+};
+
+char* images[] = { player_default, baby_block_01, small_dog };

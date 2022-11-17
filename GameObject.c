@@ -5,4 +5,6 @@ typedef struct GameObject
   double xVelocity;
   double yVelocity;
   int graphicIndex;
+  char usePhysics;
+  char disabled;
 } GameObject;

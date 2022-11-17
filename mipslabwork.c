@@ -2,7 +2,7 @@
 #include <pic32mx.h> /* Declarations of system-specific addresses etc */
 #include "mipslab.h" /* Declatations for these labs */
 #include "drawingFunctions.h"
-#include "GameObject.h"
+#include "Collision.h"
 #include "mapFunctions.h"
 
 unsigned int tickValue = 0x1;
@@ -17,8 +17,16 @@ extern char* images[2];
 extern uint8_t imageSizes[][2];
 
 GameObject *player;
+
 GameObject gameObjects[16];
 int gameObjectsLength;
+
+Collision collisions[100];
+int collisionsLength;
+
+void apply_physics();
+void find_collisions();
+void handle_collisions();
 
 void user_isr(void)
 {
@@ -40,12 +48,13 @@ void user_isr(void)
 void LoadScene(int level, int scene)
 {
   gameObjectsLength = GetLevelSceneLength(0, 0);
-  LoadLevelScene(gameObjects, 0, 0);
+  gameObjectsLength = 16;
+  LoadLevelScene(gameObjects, level, scene);
   
   player = &gameObjects[0];
 
   int i;
-  for (i = 0; i < 16; i++)
+  for (i = 0; i < gameObjectsLength; i++) //render to background
   {
     if(i != 0 && gameObjects[i].graphicIndex == 0) break;
     
@@ -81,7 +90,7 @@ void game_update(void) //will run every time the timer ticks
   if(btn1 & 0x2) //button 4
   {
     //jump
-    LoadScene(0, 1);
+    LoadScene(0,1);
   }
 
   if (buttons & 0x1) //button 3 is pressed
@@ -105,7 +114,7 @@ void draw_update(void) //will run every 100th time timer ticks
   clearScreen();
 
   int i;
-  for (i = 0; i < 16; i++)
+  for (i = 0; i < gameObjectsLength; i++)
   {
     if(i != 0 && gameObjects[i].graphicIndex == 0) break;
     
@@ -125,11 +134,157 @@ void master_update(void)
   displayUpdateCounter++;
   ticks++;
   game_update();
-
   IFSCLR(0) = 0x100;
 
   if (displayUpdateCounter == 100)
   {
+    apply_physics();
+    find_collisions();
+    handle_collisions();
     draw_update();
+  }
+}
+
+void apply_physics()
+{
+  int index = 0;
+  for(index = 0; index < gameObjectsLength; index++)
+  {
+    if(gameObjects[index].usePhysics == 1)
+    {
+      gameObjects[index].yVelocity -= 0.0001; //apply gravity
+
+      gameObjects[index].xPosition += gameObjects[index].xVelocity; //move object with x velocity
+      gameObjects[index].yPosition += gameObjects[index].yVelocity; //move object with y velocity
+    }
+  }
+}
+
+void find_collisions()
+{
+  collisionsLength = 0;
+  
+  int i = 0;
+  for(i = 0; i < gameObjectsLength; i++)
+  {
+    if(gameObjects[i].usePhysics == 1)
+    {
+      int j = 0;
+      for(j = 0; j < gameObjectsLength; j++)
+      {
+        collisionsLength += get_collision(gameObjects[i], gameObjects[j], collisions[collisionsLength]);
+      }
+    }
+  }
+}
+
+int get_collision(GameObject *object1, GameObject *object2, Collision *collision)
+{
+  double thisLeft = object1->xPosition;
+  double thisRight = object1->xPosition + getGameObjectWidth(object1);
+  double thisTop = object1->yPosition + getGameObjectHeight(object1);
+  double thisBottom = object1->yPosition;
+
+  double otherLeft = object2->xPosition;
+  double otherRight = object2->xPosition + getGameObjectWidth(object2);
+  double otherTop = object2->yPosition + getGameObjectHeight(object2);
+  double otherBottom = object2->yPosition;
+  
+  if (otherLeft >= thisLeft && otherLeft <= thisRight && otherRight >= thisRight)
+  {
+      double xOverlap = thisRight - otherLeft;
+      if (otherBottom >= thisBottom && otherBottom <= thisTop)
+      {
+          double yOverlap = thisTop - otherBottom;
+          collision->xPosition = otherLeft;
+          collision->yPosition = otherBottom;
+          collision->width = xOverlap;
+          collision->height = yOverlap;
+          collision->objectOne = object1;
+          collision->objectTwo = object2;
+          return 1;
+      }
+      else if (otherTop >= thisBottom && otherTop <= thisTop)
+      {
+          double yOverlap = otherTop - thisBottom;
+          collision->xPosition = otherLeft;
+          collision->yPosition = thisBottom;
+          collision->width = xOverlap;
+          collision->height = yOverlap;
+          collision->objectOne = object1;
+          collision->objectTwo = object2;
+          return 1;
+      }
+  }
+  else if (otherRight >= thisLeft && otherRight <= thisRight)
+  {
+      double xOverlap = otherRight - thisLeft;
+      if (otherTop >= thisBottom && otherTop <= thisTop)
+      {
+          double yOverlap = otherTop - thisBottom;
+          collision->xPosition = thisLeft;
+          collision->yPosition = thisBottom;
+          collision->width = xOverlap;
+          collision->height = yOverlap;
+          collision->objectOne = object1;
+          collision->objectTwo = object2;
+          return 1;
+      }
+      else if (otherBottom >= thisBottom && otherBottom <= thisTop)
+      {
+          double yOverlap = thisTop - otherBottom;
+          collision->xPosition = thisLeft;
+          collision->yPosition = otherBottom;
+          collision->width = xOverlap;
+          collision->height = yOverlap;
+          collision->objectOne = object1;
+          collision->objectTwo = object2;
+          return 1;
+      }
+  }
+  else if (thisLeft >= otherLeft && thisRight <= otherRight)
+  {
+      if (thisTop <= otherTop)
+      {
+          if(thisBottom >= otherBottom) 
+          {
+            collision->xPosition = thisLeft;
+            collision->yPosition = otherBottom;
+            collision->width = 3;
+            collision->height = 2;
+            collision->objectOne = object1;
+            collision->objectTwo = object2;
+            return 1;
+          }
+      }
+  }
+  else if (otherLeft >= thisLeft  && otherRight <= thisRight)
+  {
+      if (otherTop <= thisTop)
+      {
+          if (otherBottom >= thisBottom)
+          {
+            collision->xPosition = thisLeft;
+            collision->yPosition = otherBottom;
+            collision->width = 3;
+            collision->height = 2;
+            collision->objectOne = object1;
+            collision->objectTwo = object2;
+            return 1;
+          }
+      }
+  }
+  
+  return 0;
+}
+
+void handle_collisions()
+{
+  int i = 0;
+  for (i = 0; i < collisionsLength; i++)
+  {
+    collisions[i].objectOne->yVelocity = 0;
+    collisions[i].objectTwo->yVelocity = 0;
+    collisions[i].objectOne->yPosition = collisions[i].yPosition + collisions[i].height;
   }
 }
