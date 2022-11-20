@@ -12,6 +12,7 @@ typedef struct GameObject
   char disabled;
   char grounded;
   char is_mirrored;
+  char type;
 } GameObject;
 
 #endif

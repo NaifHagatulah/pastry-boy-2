@@ -20,20 +20,22 @@ void load_level_scene(GameObject sceneArray[], int level, int scene)
 
         int number = levels[level][scene][index * 3];
 
-        if(number == 1)
+        sceneArray[index].type = number;
+
+        if(number == 1) //player
         {
             sceneArray[index].graphicIndex = 0; // 0 is player default
             sceneArray[index].usePhysics = 1;
         }
-        else if(number == 2)
+        else if(number == 2) //small block
         {
             sceneArray[index].graphicIndex = 1;
         }
-        else if(number == 3)
+        else if(number == 3) //dog
         {
             sceneArray[index].graphicIndex = 2;
             sceneArray[index].usePhysics = 1;
-            sceneArray[index].xVelocity = -0.015;
+            sceneArray[index].xVelocity = -0.1;
         };
     }
 }

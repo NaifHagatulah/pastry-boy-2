@@ -12,6 +12,7 @@ unsigned int tickValue = 0x1;
 volatile int *trise = (volatile int *)0xbf886100;
 volatile int *porte = (volatile int *)0xbf886110;
 int ticks = 0;
+int gameCounter = 0;
 int displayUpdateCounter = 0;
 extern uint8_t screen_data[512];
 extern char player_default[88];
@@ -71,7 +72,7 @@ void load_scene(int level, int scene)
 void start(void)
 {
   T2CON = 0b111 << 4;                               // sätter prescale till 256
-  PR2 = (80000000 / 256) / 100;                     // sätter period
+  PR2 = (80000000 / 256) / 1000;                     // sätter period
   TMR2 = 0;                                         // nollar timer 2
   IECSET(0) = 0x00000100;                           // sätter så interupt är enable på timer 2
   IPCSET(0) = 0b11111;                              // sätter prioritet priritet 3 och sub prio 1
@@ -89,6 +90,8 @@ void start(void)
 
 void game_update(void) //will run every time the timer ticks
 {
+  gameCounter++;
+
   int buttons = getbtns();
   int btn1 = getbtn1();
 
@@ -129,8 +132,11 @@ void draw_update(void) //will run every 100th time timer ticks
   {
     if(i != 0 && gameObjects[i].graphicIndex == 0) break;
     
-    if(gameObjects[i].graphicIndex != 1)
-      draw_game_object(&gameObjects[i], 0);
+    if(gameObjects[i].type != 2) //don't draw static blocks
+    {
+      if(gameObjects[i].disabled == 0)
+        draw_game_object(&gameObjects[i], 0);
+    }
   }
 
   if(displayUpdateCounter == 2000000)
@@ -148,9 +154,9 @@ void master_update(void)
   displayUpdateCounter++;
   ticks++;
   
-  IFSCLR(0) = 0x100;
+  IFSCLR(0) = 0xffffffff;
 
-  if ((displayUpdateCounter % 100) == 0)
+  if ((displayUpdateCounter % 2) == 0)
   {
     apply_gravity();
     find_collisions();
@@ -159,6 +165,8 @@ void master_update(void)
     apply_velocities();
     draw_update();
   }
+
+  *porte = gameCounter;
 }
 
 void apply_gravity()
@@ -179,7 +187,7 @@ void apply_velocities()
   int index = 0;
   for(index = 0; index < gameObjectsLength; index++)
   {
-    if(gameObjects[index].usePhysics == 1)
+    if(gameObjects[index].usePhysics == 1 && gameObjects[index].disabled == 0)
     {
       gameObjects[index].xPosition += gameObjects[index].xVelocity; //move object with x velocity
       gameObjects[index].yPosition += gameObjects[index].yVelocity; //move object with y velocity
@@ -194,12 +202,12 @@ void find_collisions()
   int i = 0;
   for(i = 0; i < gameObjectsLength; i++)
   {
-    if(gameObjects[i].usePhysics == 1)
+    if(gameObjects[i].usePhysics == 1 && gameObjects[i].disabled == 0)
     {    
       int j = 0;
       for(j = 0; j < gameObjectsLength; j++)
       {
-        if(i != j)
+        if(i != j && gameObjects[j].disabled == 0)
           collisionsLength += get_collision(&gameObjects[i], &gameObjects[j], &collisions[collisionsLength]);
       }
     }
@@ -306,6 +314,20 @@ int get_collision(GameObject *object1, GameObject *object2, Collision *collision
   return 0;
 }
 
+void handle_dog_side_collision(Collision *collision)
+{
+  if(collision->objectTwo->type == 1)
+  {
+    collision->objectTwo->xPosition = 5;
+    collision->objectTwo->yPosition = 8;
+    collision->objectOne->disabled = 1;
+  }
+  else
+  {
+    collision->objectOne->xVelocity = -collision->objectOne->xVelocity;
+  }
+}
+
 void handle_collisions()
 {
   int i = 0;
@@ -324,10 +346,27 @@ void handle_collisions()
       else if(side == 1)
       {
         collisions[i].objectOne->xPosition = collisions[i].objectTwo->xPosition - get_game_object_width(collisions[i].objectOne);
+
+        if(collisions[i].objectOne->type == 3) //is dog
+        {
+          handle_dog_side_collision(&collisions[i]);
+        }
+      }
+      else if(side == 2)
+      {
+        if(collisions[i].objectOne->type == 1 && collisions[i].objectOne->grounded) //is player && is grounded
+        {
+          collisions[i].objectOne->yVelocity = 0;
+        }
       }
       else if(side == 3)
       {
         collisions[i].objectOne->xPosition = collisions[i].objectTwo->xPosition + get_game_object_width(collisions[i].objectOne);
+        
+        if(collisions[i].objectOne->type == 3) //is dog
+        {
+          handle_dog_side_collision(&collisions[i]);
+        }
       }
     }
   }

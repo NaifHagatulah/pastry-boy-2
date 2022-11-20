@@ -9,4 +9,5 @@ typedef struct GameObject
   char disabled;
   char grounded;
   char is_mirrored;
+  char type; // 1 = player, 2 = small block, 3 = dog
 } GameObject;
