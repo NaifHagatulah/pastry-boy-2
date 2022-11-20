@@ -52,14 +52,10 @@ void user_isr(void)
 
 void load_scene(int level, int scene)
 { 
-  gameObjectsLength = get_level_scene_length(0, 0);
-  //*porte = get_level_scene_length(0, 0) + 1;
-  gameObjectsLength = 16;
+  gameObjectsLength = get_level_scene_length(level, scene);
 
   load_level_scene(gameObjects, level, scene);
   player = &gameObjects[0];
-  
-  player->yVelocity = 0;
 
   clear_background();
   int i;
