@@ -27,6 +27,15 @@ void setPixel(int x, int y, char value, int canvasIndex)
 	canvases[canvasIndex][blockPosition] = block;
 }
 
+void clear_background()
+{
+  int i;
+  for (i = 0; i < 512; i++)
+  {
+    screen_background[i] = 0;
+  }
+}
+
 void clearScreen()
 {
   int i;

@@ -51,15 +51,15 @@ void user_isr(void)
 }
 
 void LoadScene(int level, int scene)
-{
+{ 
   gameObjectsLength = GetLevelSceneLength(0, 0);
   gameObjectsLength = 16;
   LoadLevelScene(gameObjects, level, scene);
-  
   player = &gameObjects[0];
 
   player->yVelocity = 0;
 
+  clear_background();
   int i;
   for (i = 0; i < gameObjectsLength; i++) //render to background
   {
