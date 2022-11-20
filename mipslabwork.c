@@ -50,13 +50,15 @@ void user_isr(void)
   return;
 }
 
-void LoadScene(int level, int scene)
+void load_scene(int level, int scene)
 { 
-  gameObjectsLength = GetLevelSceneLength(0, 0);
+  gameObjectsLength = get_level_scene_length(0, 0);
+  //*porte = get_level_scene_length(0, 0) + 1;
   gameObjectsLength = 16;
-  LoadLevelScene(gameObjects, level, scene);
-  player = &gameObjects[0];
 
+  load_level_scene(gameObjects, level, scene);
+  player = &gameObjects[0];
+  
   player->yVelocity = 0;
 
   clear_background();
@@ -66,7 +68,7 @@ void LoadScene(int level, int scene)
     if(i != 0 && gameObjects[i].graphicIndex == 0) break;
     
     if(gameObjects[i].graphicIndex == 1)
-      drawGameObject(&gameObjects[i], 1);
+      draw_game_object(&gameObjects[i], 1);
   }
 }
 
@@ -86,7 +88,7 @@ void start(void)
   TRISD |= 0x7f;
   TRISF |= 0x2;
 
-  LoadScene(0, 0);
+  load_scene(0, 0);
 }
 
 void game_update(void) //will run every time the timer ticks
@@ -97,7 +99,7 @@ void game_update(void) //will run every time the timer ticks
   if(btn1 & 0x2) //button 4
   {
     //jump,
-    LoadScene(0,1);
+    load_scene(0,1);
   }
 
   if (buttons & 0x1) //button 3 is pressed
@@ -124,7 +126,7 @@ void game_update(void) //will run every time the timer ticks
 
 void draw_update(void) //will run every 100th time timer ticks
 {
-  clearScreen();
+  clear_screen();
 
   int i;
   for (i = 0; i < gameObjectsLength; i++)
@@ -132,7 +134,7 @@ void draw_update(void) //will run every 100th time timer ticks
     if(i != 0 && gameObjects[i].graphicIndex == 0) break;
     
     if(gameObjects[i].graphicIndex != 1)
-      drawGameObject(&gameObjects[i], 0);
+      draw_game_object(&gameObjects[i], 0);
   }
 
   if(displayUpdateCounter == 2000000)
@@ -211,13 +213,13 @@ void find_collisions()
 int get_collision(GameObject *object1, GameObject *object2, Collision *collision)
 {
   double thisLeft = object1->xPosition;
-  double thisRight = object1->xPosition + getGameObjectWidth(object1);
-  double thisTop = object1->yPosition + getGameObjectHeight(object1);
+  double thisRight = object1->xPosition + get_game_object_width(object1);
+  double thisTop = object1->yPosition + get_game_object_height(object1);
   double thisBottom = object1->yPosition;
 
   double otherLeft = object2->xPosition;
-  double otherRight = object2->xPosition + getGameObjectWidth(object2);
-  double otherTop = object2->yPosition + getGameObjectHeight(object2);
+  double otherRight = object2->xPosition + get_game_object_width(object2);
+  double otherTop = object2->yPosition + get_game_object_height(object2);
   double otherBottom = object2->yPosition;
   
   if (otherLeft >= thisLeft && otherLeft <= thisRight && otherRight >= thisRight)
@@ -325,11 +327,11 @@ void handle_collisions()
       }
       else if(side == 1)
       {
-        collisions[i].objectOne->xPosition = collisions[i].objectTwo->xPosition - getGameObjectWidth(collisions[i].objectOne);
+        collisions[i].objectOne->xPosition = collisions[i].objectTwo->xPosition - get_game_object_width(collisions[i].objectOne);
       }
       else if(side == 3)
       {
-        collisions[i].objectOne->xPosition = collisions[i].objectTwo->xPosition + getGameObjectWidth(collisions[i].objectOne);
+        collisions[i].objectOne->xPosition = collisions[i].objectTwo->xPosition + get_game_object_width(collisions[i].objectOne);
       }
     }
   }
@@ -337,8 +339,8 @@ void handle_collisions()
 
 char get_collision_side(Collision *collision)
 {
-  double object_center_x =  collision->objectOne->xPosition + (getGameObjectWidth(collision->objectOne) / 2);
-  double object_center_y =  collision->objectOne->yPosition + (getGameObjectHeight(collision->objectOne) / 2);
+  double object_center_x =  collision->objectOne->xPosition + (get_game_object_width(collision->objectOne) / 2);
+  double object_center_y =  collision->objectOne->yPosition + (get_game_object_height(collision->objectOne) / 2);
   double center_collision_overlap_x = collision->xPosition + (collision->width / 2); 
   double center_collision_overlap_y = collision->yPosition + (collision->height / 2);
   double x_diff = center_collision_overlap_x - object_center_x;
