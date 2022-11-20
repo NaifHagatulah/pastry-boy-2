@@ -36,22 +36,29 @@ void clearScreen()
   }
 }
 
-void drawGraphic(int x, int y, int width, int height, char* graphic, int canvasIndex)
+void drawGraphic(int x, int y, int width, int height, char* graphic, char mirrored, int canvasIndex)
 {
   int i;
   int j;
   for (i = 0; i < width; i++)
   {
+    int drawX;
+    
+    if(mirrored == 0)
+        drawX = x + i;
+      else
+        drawX = (x + width - i);
+        
     for (j = 0; j < height; j++)
     {
-      setPixel(x + i, (y + height) - j, graphic[i + j * (width)], canvasIndex);
+      setPixel(drawX, (y + height) - j, graphic[i + j * (width)], canvasIndex);
     }  
   } 
 }
 
 void drawGameObject(GameObject *gameObject, int canvasIndex)
 {
-  drawGraphic((int)gameObject->xPosition, (int)gameObject->yPosition, imageSizes[gameObject->graphicIndex][0], imageSizes[gameObject->graphicIndex][1], images[gameObject->graphicIndex], canvasIndex);  
+  drawGraphic((int)gameObject->xPosition, (int)gameObject->yPosition, imageSizes[gameObject->graphicIndex][0], imageSizes[gameObject->graphicIndex][1], images[gameObject->graphicIndex], gameObject->is_mirrored, canvasIndex);  
 }
 
 int getGameObjectWidth(GameObject *gameObject)

@@ -5,6 +5,9 @@
 #include "Collision.h"
 #include "mapFunctions.h"
 
+const double JUMP_FORCE = 0.3;
+const double GRAVITY_FORCE = 0.004;
+
 unsigned int tickValue = 0x1;
 volatile int *trise = (volatile int *)0xbf886100;
 volatile int *porte = (volatile int *)0xbf886110;
@@ -93,24 +96,29 @@ void game_update(void) //will run every time the timer ticks
 
   if(btn1 & 0x2) //button 4
   {
-    //jump
+    //jump,
     LoadScene(0,1);
   }
 
   if (buttons & 0x1) //button 3 is pressed
   {
-    player->yPosition += 0.1;
-    player->yVelocity = 0.1;
+    if(player->grounded == 1)
+    {
+      player->yPosition += 0.1;
+      player->yVelocity += JUMP_FORCE;
+    }
   }
 
   if (buttons & 0x2) //button 2 is pressed
   {
     player->xPosition += 0.2; 
+    player->is_mirrored = 0;
   }
 
   if (buttons & 0x4) //button 1 is pressed
   {
     player->xPosition -= 0.2;   
+    player->is_mirrored = 1;
   }
 }
 
@@ -162,7 +170,8 @@ void apply_gravity()
   {
     if(gameObjects[index].usePhysics == 1)
     {
-      gameObjects[index].yVelocity -= 0.004; //apply gravity
+      gameObjects[index].grounded = 0; //reset grounded every frame
+      gameObjects[index].yVelocity -= GRAVITY_FORCE; //apply gravity
     }
   }
 }
@@ -311,7 +320,7 @@ void handle_collisions()
       if(side == 4)
       {
         collisions[i].objectOne->yVelocity = 0;
-        collisions[i].objectTwo->yVelocity = 0;
+        collisions[i].objectOne->grounded = 1;
         collisions[i].objectOne->yPosition = collisions[i].objectTwo->yPosition + 4;
       }
       else if(side == 1)

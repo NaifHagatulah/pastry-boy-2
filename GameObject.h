@@ -10,6 +10,8 @@ typedef struct GameObject
   int graphicIndex;
   char usePhysics;
   char disabled;
+  char grounded;
+  char is_mirrored;
 } GameObject;
 
 #endif
