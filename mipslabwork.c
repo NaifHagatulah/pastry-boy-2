@@ -325,6 +325,11 @@ void handle_dog_side_collision(Collision *collision)
   else
   {
     collision->objectOne->xVelocity = -collision->objectOne->xVelocity;
+
+    if(collision->objectOne->xVelocity < 0)
+      collision->objectOne->is_mirrored = 0;
+    else
+      collision->objectOne->is_mirrored = 1;
   }
 }
 
