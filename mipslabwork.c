@@ -24,9 +24,11 @@ int gameObjectsLength;
 Collision collisions[100];
 int collisionsLength;
 
-void apply_physics();
+void apply_velocities();
 void find_collisions();
 void handle_collisions();
+void apply_gravity();
+char get_collision_side(Collision *collision);
 
 void user_isr(void)
 {
@@ -97,17 +99,18 @@ void game_update(void) //will run every time the timer ticks
 
   if (buttons & 0x1) //button 3 is pressed
   {
-    //attack
+    player->yPosition += 0.1;
+    player->yVelocity = 0.1;
   }
 
   if (buttons & 0x2) //button 2 is pressed
   {
-    player->xPosition += 0.002; 
+    player->xPosition += 0.2; 
   }
 
   if (buttons & 0x4) //button 1 is pressed
   {
-    player->xPosition -= 0.002;   
+    player->xPosition -= 0.2;   
   }
 }
 
@@ -138,31 +141,39 @@ void master_update(void)
 
   displayUpdateCounter++;
   ticks++;
-  game_update();
+  
   IFSCLR(0) = 0x100;
 
   if ((displayUpdateCounter % 100) == 0)
   {
+    apply_gravity();
+    find_collisions();
+    handle_collisions();
+    game_update();
+    apply_velocities();
     draw_update();
-    apply_physics();
-    
-    if((displayUpdateCounter % 20000) == 0)
-    {
-      find_collisions();
-      handle_collisions();
-    }
   }
 }
 
-void apply_physics()
+void apply_gravity()
 {
   int index = 0;
   for(index = 0; index < gameObjectsLength; index++)
   {
     if(gameObjects[index].usePhysics == 1)
     {
-      gameObjects[index].yVelocity -= 0.0001; //apply gravity
+      gameObjects[index].yVelocity -= 0.004; //apply gravity
+    }
+  }
+}
 
+void apply_velocities()
+{
+  int index = 0;
+  for(index = 0; index < gameObjectsLength; index++)
+  {
+    if(gameObjects[index].usePhysics == 1)
+    {
       gameObjects[index].xPosition += gameObjects[index].xVelocity; //move object with x velocity
       gameObjects[index].yPosition += gameObjects[index].yVelocity; //move object with y velocity
     }
@@ -181,7 +192,8 @@ void find_collisions()
       int j = 0;
       for(j = 0; j < gameObjectsLength; j++)
       {
-        collisionsLength += get_collision(&gameObjects[i], &gameObjects[j], &collisions[collisionsLength]);
+        if(i != j)
+          collisionsLength += get_collision(&gameObjects[i], &gameObjects[j], &collisions[collisionsLength]);
       }
     }
   }
@@ -199,9 +211,6 @@ int get_collision(GameObject *object1, GameObject *object2, Collision *collision
   double otherTop = object2->yPosition + getGameObjectHeight(object2);
   double otherBottom = object2->yPosition;
   
-  //*porte += 1;
-  *porte |= object1->graphicIndex + object2->graphicIndex;
-
   if (otherLeft >= thisLeft && otherLeft <= thisRight && otherRight >= thisRight)
   {
       double xOverlap = thisRight - otherLeft;
@@ -292,13 +301,51 @@ int get_collision(GameObject *object1, GameObject *object2, Collision *collision
 
 void handle_collisions()
 {
-  *porte = collisionsLength;
-
   int i = 0;
   for (i = 0; i < collisionsLength; i++)
   {
-    collisions[i].objectOne->yVelocity = 0;
-    collisions[i].objectTwo->yVelocity = 0;
-    collisions[i].objectOne->yPosition = collisions[i].height + 1;
+    if(collisions[i].objectOne->usePhysics == 1)
+    {
+      char side = get_collision_side(&collisions[i]);
+
+      if(side == 4)
+      {
+        collisions[i].objectOne->yVelocity = 0;
+        collisions[i].objectTwo->yVelocity = 0;
+        collisions[i].objectOne->yPosition = collisions[i].objectTwo->yPosition + 4;
+      }
+      else if(side == 1)
+      {
+        collisions[i].objectOne->xPosition = collisions[i].objectTwo->xPosition - getGameObjectWidth(collisions[i].objectOne);
+      }
+      else if(side == 3)
+      {
+        collisions[i].objectOne->xPosition = collisions[i].objectTwo->xPosition + getGameObjectWidth(collisions[i].objectOne);
+      }
+    }
+  }
+}
+
+char get_collision_side(Collision *collision)
+{
+  double object_center_x =  collision->objectOne->xPosition + (getGameObjectWidth(collision->objectOne) / 2);
+  double object_center_y =  collision->objectOne->yPosition + (getGameObjectHeight(collision->objectOne) / 2);
+  double center_collision_overlap_x = collision->xPosition + (collision->width / 2); 
+  double center_collision_overlap_y = collision->yPosition + (collision->height / 2);
+  double x_diff = center_collision_overlap_x - object_center_x;
+  double y_diff = center_collision_overlap_y - object_center_y;
+    if (collision->height > collision->width)
+  {
+    if (x_diff > 0) //Rightside collision on the side
+      return 1;
+    else
+      return 3;
+  }
+  else
+  {
+    if (y_diff > 0)
+      return 2;
+    else
+      return 4;
   }
 }
