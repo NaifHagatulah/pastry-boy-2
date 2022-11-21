@@ -15,6 +15,7 @@ volatile int *porte = (volatile int *)0xbf886110;
 int ticks = 0;
 int gameCounter = 0;
 int displayUpdateCounter = 0;
+double timeScale = 2;
 
 extern uint8_t screen_data[512];
 extern char player_default[88];
@@ -69,7 +70,7 @@ void load_scene(int level, int scene)
 void start(void)
 {
   T2CON = 0b111 << 4;                               // sätter prescale till 256
-  PR2 = (80000000 / 256) / 1000;                     // sätter period
+  PR2 = (80000000 / 256) / 10000;                   // sätter period
   TMR2 = 0;                                         // nollar timer 2
   IECSET(0) = 0x00000100;                           // sätter så interupt är enable på timer 2
   IPCSET(0) = 0b11111;                              // sätter prioritet priritet 3 och sub prio 1
@@ -108,13 +109,13 @@ void game_update(void) //will run every time the timer ticks
 
   if (buttons & 0x2) //button 2 is pressed
   {
-    player->xPosition += 0.2; 
+    player->xPosition += 0.2 * timeScale; 
     player->is_mirrored = 0;
   }
 
   if (buttons & 0x4) //button 1 is pressed
   {
-    player->xPosition -= 0.2;   
+    player->xPosition -= 0.2 * timeScale;   
     player->is_mirrored = 1;
   }
 
@@ -173,7 +174,7 @@ void master_update(void)
   
   IFSCLR(0) = 0xffffffff;
 
-  if ((displayUpdateCounter % 2) == 0)
+  if ((displayUpdateCounter % 10) == 0)
   {
     apply_gravity();
     find_collisions();
@@ -192,7 +193,7 @@ void apply_gravity()
     if(gameObjects[index].usePhysics == 1)
     {
       gameObjects[index].grounded = 0; //reset grounded every frame
-      gameObjects[index].yVelocity -= GRAVITY_FORCE; //apply gravity
+      gameObjects[index].yVelocity -= GRAVITY_FORCE * timeScale; //apply gravity
     }
   }
 }
@@ -204,8 +205,8 @@ void apply_velocities()
   {
     if(gameObjects[index].usePhysics == 1 && gameObjects[index].disabled == 0)
     {
-      gameObjects[index].xPosition += gameObjects[index].xVelocity; //move object with x velocity
-      gameObjects[index].yPosition += gameObjects[index].yVelocity; //move object with y velocity
+      gameObjects[index].xPosition += gameObjects[index].xVelocity * timeScale; //move object with x velocity
+      gameObjects[index].yPosition += gameObjects[index].yVelocity * timeScale; //move object with y velocity
     }
   }
 }
@@ -256,14 +257,25 @@ void die()
   player->yVelocity = 0;
 }
 
+double abs(double value)
+{
+  if(value < 0)
+    return -value;
+}
+
 int get_collision(GameObject *object1, GameObject *object2, Collision *collision)
 {
   double thisLeft = object1->xPosition;
+  double otherLeft = object2->xPosition;
+  
+  //double difference = thisLeft - otherLeft;
+  //if(abs(difference) > 10)
+  //  return 0;
+
   double thisRight = object1->xPosition + get_game_object_width(object1);
   double thisTop = object1->yPosition + get_game_object_height(object1);
   double thisBottom = object1->yPosition;
 
-  double otherLeft = object2->xPosition;
   double otherRight = object2->xPosition + get_game_object_width(object2);
   double otherTop = object2->yPosition + get_game_object_height(object2);
   double otherBottom = object2->yPosition;
