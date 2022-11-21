@@ -11,9 +11,11 @@ const double GRAVITY_FORCE = 0.004;
 unsigned int tickValue = 0x1;
 volatile int *trise = (volatile int *)0xbf886100;
 volatile int *porte = (volatile int *)0xbf886110;
+
 int ticks = 0;
 int gameCounter = 0;
 int displayUpdateCounter = 0;
+
 extern uint8_t screen_data[512];
 extern char player_default[88];
 extern char baby_block_01[32];
@@ -21,9 +23,10 @@ extern char* images[2];
 extern uint8_t imageSizes[][2];
 
 GameObject *player;
-
-GameObject gameObjects[16];
+GameObject gameObjects[32];
 int gameObjectsLength;
+int currentScene;
+int currentLevel;
 
 Collision collisions[100];
 int collisionsLength;
@@ -33,26 +36,20 @@ void find_collisions();
 void handle_collisions();
 void apply_gravity();
 char get_collision_side(Collision *collision);
+void die();
+void go_to_next_scene();
+void go_to_previous_scene();
 
 void user_isr(void)
 {
-  /*if (IFS(0))
-  {
-    IFSCLR(0) = 0x100;
-    count++;
-    if (count == 10)
-    {
-    count = 0;
-    ticks++;
-    tick(&mytime);
-    }
-    
-  }*/
   return;
 }
 
 void load_scene(int level, int scene)
 { 
+  currentLevel = level;
+  currentScene = scene;
+
   gameObjectsLength = get_level_scene_length(level, scene);
 
   load_level_scene(gameObjects, level, scene);
@@ -80,12 +77,11 @@ void start(void)
   T2CONSET = 0x8000;                                // aktiverar timer 2
 
   *trise = 0x00;
-  //*porte = 0xff;
 
   TRISD |= 0x7f;
   TRISF |= 0x2;
 
-  load_scene(0, 0);
+  load_scene(currentLevel, currentScene);
 }
 
 void game_update(void) //will run every time the timer ticks
@@ -120,6 +116,27 @@ void game_update(void) //will run every time the timer ticks
   {
     player->xPosition -= 0.2;   
     player->is_mirrored = 1;
+  }
+
+  if(player->yPosition < -8)
+  {
+    die();
+  }
+
+  *porte = currentScene + 1;
+
+  if(currentScene == 0 && player->xPosition <= 0)
+  {
+    player->xPosition = 0;
+  }
+
+  if(player->xPosition > 128)
+  {
+    go_to_next_scene();
+  }
+  else if(player->xPosition < -8)
+  {
+    go_to_previous_scene();
   }
 }
 
@@ -165,8 +182,6 @@ void master_update(void)
     apply_velocities();
     draw_update();
   }
-
-  *porte = gameCounter;
 }
 
 void apply_gravity()
@@ -212,6 +227,33 @@ void find_collisions()
       }
     }
   }
+}
+
+void go_to_next_scene()
+{
+  int yPosition = player->yPosition;
+  int yVelocity = player->yVelocity;
+  load_scene(0, 1);
+  player->yPosition = yPosition;
+  player->xPosition = 2;
+  player->yVelocity = yVelocity;
+}
+
+void go_to_previous_scene()
+{
+  int yPosition = player->yPosition;
+  int yVelocity = player->yVelocity;
+  load_scene(0, 0);
+  player->yPosition = yPosition;
+  player->xPosition = 110;
+  player->yVelocity = yVelocity;
+}
+
+void die()
+{
+  player->xPosition = 2;
+  player->yPosition = 5;
+  player->yVelocity = 0;
 }
 
 int get_collision(GameObject *object1, GameObject *object2, Collision *collision)
@@ -359,7 +401,7 @@ void handle_collisions()
       }
       else if(side == 2)
       {
-        if(collisions[i].objectOne->type == 1 && collisions[i].objectOne->grounded) //is player && is grounded
+        if(collisions[i].objectOne->type == 1 && collisions[i].objectOne->yVelocity > 0) //is player && is going upwards
         {
           collisions[i].objectOne->yVelocity = 0;
         }
