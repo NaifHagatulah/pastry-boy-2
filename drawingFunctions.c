@@ -5,6 +5,7 @@ extern uint8_t screen_data[512];
 extern uint8_t screen_background[512];
 extern uint8_t imageSizes[][2];
 extern char* images[2];
+extern char* characters[10];
 
 uint8_t *canvases[] = { screen_data, screen_background };
 
@@ -63,6 +64,29 @@ void drawGraphic(int x, int y, int width, int height, char* graphic, char mirror
       setPixel(drawX, (y + height) - j, graphic[i + j * (width)], canvasIndex);
     }  
   } 
+}
+
+void draw_character(int x, int y, char character)
+{
+  char charIndex = 0;
+
+  if(character >= 48 && character <= 57)
+    charIndex = character - 48;
+  else
+    charIndex = 0;
+
+  drawGraphic(x, y, 5, 5, characters[charIndex], 0, 0);
+}
+
+void draw_string(int x, int y, char* string, int length)
+{
+  int currentOffset = 0;
+  int i;
+  for (i = 0; i < length; i++)
+  {
+    draw_character(x + currentOffset, y, string[i]);
+    currentOffset += 5;
+  }
 }
 
 void draw_game_object(GameObject *gameObject, int canvasIndex)

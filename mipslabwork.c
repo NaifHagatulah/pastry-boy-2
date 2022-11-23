@@ -6,16 +6,19 @@
 #include "mapFunctions.h"
 
 const double JUMP_FORCE = 0.3;
-const double GRAVITY_FORCE = 0.004;
+const double GRAVITY_FORCE = 0.008;
 
 unsigned int tickValue = 0x1;
 volatile int *trise = (volatile int *)0xbf886100;
 volatile int *porte = (volatile int *)0xbf886110;
 
 int ticks = 0;
-int gameCounter = 0;
+int gameCounter = 1;
 int displayUpdateCounter = 0;
-double timeScale = 2;
+double timeScale = 1;
+int lastGameCounter = 0;
+int lastDisplay = 0;
+double deltaTime = 1;
 
 extern uint8_t screen_data[512];
 extern char player_default[88];
@@ -40,10 +43,72 @@ char get_collision_side(Collision *collision);
 void die();
 void go_to_next_scene();
 void go_to_previous_scene();
+void game_update();
+void draw_objects();
+void get_int_as_string(int value, char string[], int length);
 
 void user_isr(void)
 {
+  if (IFS(0) & 0x00010000) //clock
+  {
+    displayUpdateCounter++;
+
+    IFSCLR(0) = 0x00010000;
+    if (displayUpdateCounter % 20 == 0)
+    {
+      int deltaGameCounter = gameCounter - lastGameCounter;
+      timeScale = deltaGameCounter / 150.0;
+      lastGameCounter = gameCounter;
+      
+      int test = (int)(deltaGameCounter>>4);
+
+      apply_gravity();
+      find_collisions();
+      handle_collisions();
+      game_update();
+      apply_velocities();
+
+      clear_screen(); //clear screen to make it ready for drawing
+      draw_objects(); //draw gameobjects
+
+      char string[10] = {0};
+      get_int_as_string((int)(timeScale * 100.0), string, sizeof(string));
+      draw_string(1, 26, string, 10);
+
+      char string2[10] = {0};
+      get_int_as_string(gameCounter, string2, sizeof(string2));
+      draw_string(1, 21, string2, 10);
+
+      char string3[10] = {0};
+      get_int_as_string(displayUpdateCounter, string3, sizeof(string3));
+      draw_string(1, 14, string3, 10);
+
+      display_image(0, screen_data); //display the image on the screen
+    }
+  }
+  
+  if (IFS(0) & 0x100) //master updates
+  {
+    IFSCLR(0) = 0x100;
+    gameCounter++;
+  }
+
   return;
+}
+
+void get_int_as_string(int value, char string[], int length)
+{
+  int i = 0;
+  int input = value;
+  while(input)
+  {
+    string[length - 1 - i] = '0' + input % 10;
+    input /= 10;
+    i++;
+
+    if(i > length)
+      break;
+  }  
 }
 
 void load_scene(int level, int scene)
@@ -69,26 +134,40 @@ void load_scene(int level, int scene)
 
 void start(void)
 {
-  T2CON = 0b111 << 4;                               // sätter prescale till 256
-  PR2 = (80000000 / 256) / 10000;                   // sätter period
-  TMR2 = 0;                                         // nollar timer 2
-  IECSET(0) = 0x00000100;                           // sätter så interupt är enable på timer 2
-  IPCSET(0) = 0b11111;                              // sätter prioritet priritet 3 och sub prio 1
-  enable_interrupt();                               // sätter interupt global
-  T2CONSET = 0x8000;                                // aktiverar timer 2
+  T2CON = 0b111 << 4;     // sätter prescale till 256
+  PR2 = 30;               //(8000000 / 256) / 1000;            // sätter period
+  TMR2 = 0;               // nollar timer 2
+  IECSET(0) = 0x00000100;      // sätter så interupt är enable på timer 2
+  IPCSET(2) = 0x0000000C;    // sätter prioritet
+
+  //T4CON = 0x0; // Stop 16-bit Timer4 and clear control register
+  //T5CON = 0x0; // Stop 16-bit Timer5 and clear control register
+  //T4CONSET = 0x0038; // Enable 32-bit mode, prescaler at 1:8
+
+  T4CON = 0b111 << 4;     // sätter prescale till 256
+  TMR4 = 0; // Clear contents of the TMR4 and TMR5
+  PR4 = 30; // Load PR4 and PR5 registers with 32-bit value
+  IPCSET(5) = 0x00000004; // Set priority level=1 and
+  IPCSET(5) = 0x00000001; // Set sub-priority level=1
+  // Could have also done this in single
+  // operation by assigning IPC5SET = 0x00000005
+  IFSCLR(0) = 0x00010000; // Clear the Timer5 interrupt status flag
+  IECSET(0) = 0x00010000; // Enable Timer5 interrupts
+
+  enable_interrupt();
+
+  T4CONSET = 0x8000; // Start Timer
+  T2CONSET = 0x8000; // aktiverar timer 2
 
   *trise = 0x00;
 
   TRISD |= 0x7f;
-  TRISF |= 0x2;
 
   load_scene(currentLevel, currentScene);
 }
 
-void game_update(void) //will run every time the timer ticks
+void game_update() //will run every time the timer ticks
 {
-  gameCounter++;
-
   int buttons = getbtns();
   int btn1 = getbtn1();
 
@@ -102,20 +181,20 @@ void game_update(void) //will run every time the timer ticks
   {
     if(player->grounded == 1)
     {
-      player->yPosition += 0.1;
+      player->yPosition += 1;
       player->yVelocity += JUMP_FORCE;
     }
   }
 
   if (buttons & 0x2) //button 2 is pressed
   {
-    player->xPosition += 0.2 * timeScale; 
+    player->xPosition += 0.1; // timeScale; 
     player->is_mirrored = 0;
   }
 
   if (buttons & 0x4) //button 1 is pressed
   {
-    player->xPosition -= 0.2 * timeScale;   
+    player->xPosition -= 0.1; // timeScale;   
     player->is_mirrored = 1;
   }
 
@@ -124,7 +203,7 @@ void game_update(void) //will run every time the timer ticks
     die();
   }
 
-  *porte = currentScene + 1;
+  //*porte = currentScene + 1;
 
   if(currentScene == 0 && player->xPosition <= 0)
   {
@@ -141,10 +220,8 @@ void game_update(void) //will run every time the timer ticks
   }
 }
 
-void draw_update(void) //will run every 100th time timer ticks
+void draw_objects(void) //will run every 100th time timer ticks
 {
-  clear_screen();
-
   int i;
   for (i = 0; i < gameObjectsLength; i++)
   {
@@ -161,28 +238,32 @@ void draw_update(void) //will run every 100th time timer ticks
   {
     displayUpdateCounter = 0; 
   }
-  display_image(0, screen_data); //draw image to screen
 }
 
 void master_update(void)
 {
-  if(!IFS(0)) //only update on timer
+  /*
+  if(IFS(0)) //only update on timer
     return;
 
-  displayUpdateCounter++;
-  ticks++;
-  
-  IFSCLR(0) = 0xffffffff;
-
-  if ((displayUpdateCounter % 10) == 0)
+  if(((IFS(0)>>2) && 1) == 1)
   {
+    displayUpdateCounter++;
+    ticks++;
+  }
+
+  
+  if ((displayUpdateCounter % 100) == 0 && ((IFS(0)>>2) && 1) == 1)
+  {
+    IFSCLR(0) = 0x00000100;
+    IECSET(0) = 0x00000100;
     apply_gravity();
     find_collisions();
     handle_collisions();
     game_update();
     apply_velocities();
     draw_update();
-  }
+  }*/
 }
 
 void apply_gravity()
@@ -193,7 +274,7 @@ void apply_gravity()
     if(gameObjects[index].usePhysics == 1)
     {
       gameObjects[index].grounded = 0; //reset grounded every frame
-      gameObjects[index].yVelocity -= GRAVITY_FORCE * timeScale; //apply gravity
+      gameObjects[index].yVelocity -= GRAVITY_FORCE;// / timeScale; //apply gravity
     }
   }
 }
@@ -205,8 +286,8 @@ void apply_velocities()
   {
     if(gameObjects[index].usePhysics == 1 && gameObjects[index].disabled == 0)
     {
-      gameObjects[index].xPosition += gameObjects[index].xVelocity * timeScale; //move object with x velocity
-      gameObjects[index].yPosition += gameObjects[index].yVelocity * timeScale; //move object with y velocity
+      gameObjects[index].xPosition += gameObjects[index].xVelocity;// / timeScale; //move object with x velocity
+      gameObjects[index].yPosition += gameObjects[index].yVelocity;// / timeScale; //move object with y velocity
     }
   }
 }
