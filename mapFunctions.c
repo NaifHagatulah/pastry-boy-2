@@ -35,7 +35,7 @@ void load_level_scene(GameObject sceneArray[], int level, int scene)
         {
             sceneArray[index].graphicIndex = 2;
             sceneArray[index].usePhysics = 1;
-            sceneArray[index].xVelocity = -0.1;
+            sceneArray[index].xVelocity = -0.15;
         };
     }
 }

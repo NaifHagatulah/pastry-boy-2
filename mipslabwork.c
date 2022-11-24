@@ -33,6 +33,10 @@ int currentLevel;
 Collision collisions[100];
 int collisionsLength;
 
+int graphicChangeTime = 0;
+GameObject *graphicChangeTarget;
+int graphicChangeNewIndex;
+
 void apply_velocities();
 void find_collisions();
 void handle_collisions();
@@ -44,6 +48,9 @@ void go_to_previous_scene();
 void game_update();
 void draw_objects();
 void get_int_as_string(int value, char string[], int length);
+void queue_graphic_change(GameObject *gameObject, int newGraphicIndex, int delay);
+void perform_queued_graphic_change();
+void set_object_graphic(GameObject *gameObject, int graphicIndex);
 
 void user_isr(void)
 { 
@@ -63,9 +70,9 @@ void user_isr(void)
       clear_screen(); //clear screen to make it ready for drawing
       draw_objects(); //draw gameobjects
 
-      //char string[10] = {0};
-      //get_int_as_string((int)(timeScale * 100.0), string, sizeof(string));
-      //draw_string(1, 26, string, 10);
+      char string[10] = {0};
+      get_int_as_string(gameCounter, string, sizeof(string));
+      draw_string(1, 26, string, 10);
 
       display_image(0, screen_data); //display the image on the screen
     }
@@ -130,13 +137,15 @@ void start(void)
 
 void game_update() //will run every time the timer ticks
 {
+  gameCounter++;
+
   int buttons = getbtns();
   int btn1 = getbtn1();
 
-  if(btn1 & 0x2) //button 4
+  if(btn1 & 0x2) //button 4 is pressed
   {
-    //jump,
-    load_scene(0,1);
+    player->graphicIndex = 3;
+    queue_graphic_change(player, 0, 100);
   }
 
   if (buttons & 0x1) //button 3 is pressed
@@ -165,8 +174,6 @@ void game_update() //will run every time the timer ticks
     die();
   }
 
-  //*porte = currentScene + 1;
-
   if(currentScene == 0 && player->xPosition <= 0)
   {
     player->xPosition = 0;
@@ -179,6 +186,11 @@ void game_update() //will run every time the timer ticks
   else if(player->xPosition < -8)
   {
     go_to_previous_scene();
+  }
+
+  if(graphicChangeTime != 0 && gameCounter > graphicChangeTime) //check if we should perform a queued graphic change
+  {
+    perform_queued_graphic_change();
   }
 }
 
@@ -202,30 +214,8 @@ void draw_objects(void) //will run every 100th time timer ticks
   }
 }
 
-void master_update(void)
+void master_update(void) //user_isr is used instead
 {
-  /*
-  if(IFS(0)) //only update on timer
-    return;
-
-  if(((IFS(0)>>2) && 1) == 1)
-  {
-    displayUpdateCounter++;
-    ticks++;
-  }
-
-  
-  if ((displayUpdateCounter % 100) == 0 && ((IFS(0)>>2) && 1) == 1)
-  {
-    IFSCLR(0) = 0x00000100;
-    IECSET(0) = 0x00000100;
-    apply_gravity();
-    find_collisions();
-    handle_collisions();
-    game_update();
-    apply_velocities();
-    draw_update();
-  }*/
 }
 
 void apply_gravity()
@@ -496,4 +486,22 @@ char get_collision_side(Collision *collision)
     else
       return 4;
   }
+}
+
+void set_object_graphic(GameObject *gameObject, int graphicIndex)
+{
+  gameObject->graphicIndex = graphicIndex;
+}
+
+void queue_graphic_change(GameObject *gameObject, int newGraphicIndex, int delay)
+{
+  graphicChangeTarget = gameObject;
+  graphicChangeTime = gameCounter + delay;
+  graphicChangeNewIndex = newGraphicIndex;
+}
+
+void perform_queued_graphic_change()
+{
+  set_object_graphic(graphicChangeTarget, graphicChangeNewIndex);
+  graphicChangeTime = 0;
 }

@@ -2,5 +2,6 @@
     "files.associations": {
         "mipslab.h": "c",
         "gameobject.h": "c"
-    }
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }
