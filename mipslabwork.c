@@ -495,6 +495,9 @@ void set_object_graphic(GameObject *gameObject, int graphicIndex)
 
 void queue_graphic_change(GameObject *gameObject, int newGraphicIndex, int delay)
 {
+  if(graphicChangeTime != 0)
+    perform_queued_graphic_change();
+    
   graphicChangeTarget = gameObject;
   graphicChangeTime = gameCounter + delay;
   graphicChangeNewIndex = newGraphicIndex;
