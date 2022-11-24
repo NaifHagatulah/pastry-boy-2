@@ -37,6 +37,9 @@ int graphicChangeTime = 0;
 GameObject *graphicChangeTarget;
 int graphicChangeNewIndex;
 
+int kickCooldown = 0;
+int kickTimeCounter = 0;
+
 void apply_velocities();
 void find_collisions();
 void handle_collisions();
@@ -138,14 +141,20 @@ void start(void)
 void game_update() //will run every time the timer ticks
 {
   gameCounter++;
+  kickCooldown--;
+  kickTimeCounter--;
 
   int buttons = getbtns();
   int btn1 = getbtn1();
 
   if(btn1 & 0x2) //button 4 is pressed
   {
-    player->graphicIndex = 3;
-    queue_graphic_change(player, 0, 100);
+    if(player->graphicIndex != 3 && kickCooldown <= 0)
+    {
+      set_object_graphic(player, 3);
+      kickCooldown = 100;
+      kickTimeCounter = 30;
+    }
   }
 
   if (buttons & 0x1) //button 3 is pressed
@@ -191,6 +200,11 @@ void game_update() //will run every time the timer ticks
   if(graphicChangeTime != 0 && gameCounter > graphicChangeTime) //check if we should perform a queued graphic change
   {
     perform_queued_graphic_change();
+  }
+
+  if(player->graphicIndex == 3 && kickTimeCounter <= 0)
+  {
+    set_object_graphic(player, 0);
   }
 }
 
@@ -300,10 +314,6 @@ int get_collision(GameObject *object1, GameObject *object2, Collision *collision
 {
   double thisLeft = object1->xPosition;
   double otherLeft = object2->xPosition;
-  
-  //double difference = thisLeft - otherLeft;
-  //if(abs(difference) > 10)
-  //  return 0;
 
   double thisRight = object1->xPosition + get_game_object_width(object1);
   double thisTop = object1->yPosition + get_game_object_height(object1);
@@ -497,7 +507,7 @@ void queue_graphic_change(GameObject *gameObject, int newGraphicIndex, int delay
 {
   if(graphicChangeTime != 0)
     perform_queued_graphic_change();
-    
+
   graphicChangeTarget = gameObject;
   graphicChangeTime = gameCounter + delay;
   graphicChangeNewIndex = newGraphicIndex;
