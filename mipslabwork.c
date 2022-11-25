@@ -413,7 +413,7 @@ int get_collision(GameObject *object1, GameObject *object2, Collision *collision
 
 void handle_dog_side_collision(Collision *collision)
 {
-  if(collision->objectTwo->type == 1)
+  if(collision->objectTwo->type == 1) //player
   {
     collision->objectTwo->xPosition = 5;
     collision->objectTwo->yPosition = 8;

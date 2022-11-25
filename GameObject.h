@@ -13,6 +13,9 @@ typedef struct GameObject
   char grounded;
   char is_mirrored;
   char type;
+  int health;
+  int invincibilityCounter;
+  char forvedMovement;
 } GameObject;
 
 #endif
