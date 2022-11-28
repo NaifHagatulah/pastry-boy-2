@@ -73,7 +73,7 @@ void draw_character(int x, int y, char character)
   if(character >= 48 && character <= 57)
     charIndex = character - 48; //numbers
   else if(character >= 65 && character <= 90)
-    charIndex = character - 65; //capital letters
+    charIndex = character - 65 + 12; //capital letters
   else if(character == 32)
     charIndex = 11; //white space
   else
@@ -89,7 +89,7 @@ void draw_string(int x, int y, char* string, int length)
   for (i = 0; i < length; i++)
   {
     draw_character(x + currentOffset, y, string[i]);
-    currentOffset += 5;
+    currentOffset += 6;
   }
 }
 

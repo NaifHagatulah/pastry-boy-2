@@ -75,7 +75,7 @@ void user_isr(void)
 
       char string[10] = {0};
       get_int_as_string(gameCounter, string, sizeof(string));
-      draw_string(1, 26, string, 10);
+      draw_string(1, 26, "MR HAGATULAHMAN", 15);
 
       display_image(0, screen_data); //display the image on the screen
     }

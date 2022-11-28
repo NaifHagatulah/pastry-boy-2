@@ -292,15 +292,6 @@ char unsupported[] =
 	0, 1, 0, 1, 0,
 };
 
-char whiteSpace[] = 
-{
-	0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0,
-};
-
 char letter_a[] = 
 {
 	0, 1, 1, 0, 0,
@@ -550,8 +541,6 @@ char* characters[] =
 	unsupported,
 	whiteSpace,
 	letter_a,
-	letter_b,
-	letter_c,
 	letter_b,
 	letter_c,
 	letter_d,
