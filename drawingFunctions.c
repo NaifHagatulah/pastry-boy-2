@@ -5,7 +5,7 @@ extern uint8_t screen_data[512];
 extern uint8_t screen_background[512];
 extern uint8_t imageSizes[][2];
 extern char* images[2];
-extern char* characters[10];
+extern char* characters[29];
 
 uint8_t *canvases[] = { screen_data, screen_background };
 
@@ -71,9 +71,13 @@ void draw_character(int x, int y, char character)
   char charIndex = 0;
 
   if(character >= 48 && character <= 57)
-    charIndex = character - 48;
+    charIndex = character - 48; //numbers
+  else if(character >= 65 && character <= 90)
+    charIndex = character - 65; //capital letters
+  else if(character == 32)
+    charIndex = 11; //white space
   else
-    charIndex = 0;
+    charIndex = 10; //unsupported character
 
   drawGraphic(x, y, 5, 5, characters[charIndex], 0, 0);
 }
