@@ -5,7 +5,7 @@ extern uint8_t screen_data[512];
 extern uint8_t screen_background[512];
 extern uint8_t imageSizes[][2];
 extern char* images[2];
-extern char* characters[29];
+extern char* characters[];
 
 uint8_t *canvases[] = { screen_data, screen_background };
 
