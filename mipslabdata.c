@@ -526,6 +526,15 @@ char letter_z[] =
 	1, 1, 1, 1, 1,
 };
 
+char letter_arrow[] = 
+{
+	1, 1, 0, 0, 0,
+	1, 0, 1, 0, 0,
+	1, 0, 0, 1, 0,
+	1, 0, 1, 0, 0,
+	1, 1, 0, 0, 0,
+};
+
 char* characters[] = 
 {
 	number_0,
@@ -566,4 +575,5 @@ char* characters[] =
 	letter_x,
 	letter_y,
 	letter_z,
+	letter_arrow,
 };

@@ -13,10 +13,14 @@ unsigned int tickValue = 0x1;
 volatile int *trise = (volatile int *)0xbf886100;
 volatile int *porte = (volatile int *)0xbf886110;
 
+int menuOptionChangeCooldown = 0;
+int menuOptionSelected = 0;
+int menuScreen = 0;
 int ticks = 0;
 int gameCounter = 1;
 int displayUpdateCounter = 0;
 double timeScale = 1;
+int switchStartState = 0;
 
 extern uint8_t screen_data[512];
 extern char player_default[88];
@@ -54,6 +58,9 @@ void get_int_as_string(int value, char string[], int length);
 void queue_graphic_change(GameObject *gameObject, int newGraphicIndex, int delay);
 void perform_queued_graphic_change();
 void set_object_graphic(GameObject *gameObject, int graphicIndex);
+void master_game_update();
+void main_menu_update();
+void menu_logic_update();
 
 void user_isr(void)
 { 
@@ -64,23 +71,59 @@ void user_isr(void)
     IFSCLR(0) = 0x100;
     if (displayUpdateCounter % 20 == 0)
     {
-      apply_gravity();
-      find_collisions();
-      handle_collisions();
-      game_update();
-      apply_velocities();
-
-      clear_screen(); //clear screen to make it ready for drawing
-      draw_objects(); //draw gameobjects
-
-      char string[10] = {0};
-      get_int_as_string(gameCounter, string, sizeof(string));
-      draw_string(1, 26, "MR HAGATULAHMAN", 15);
-
-      display_image(0, screen_data); //display the image on the screen
+      if(menuScreen == 0)
+        master_game_update();
+      if(menuScreen == 1)
+      {
+        menu_logic_update();
+        main_menu_update();
+      }
     }
   }
   return;
+}
+
+void main_menu_update()
+{
+  clear_screen(); //clear screen to make it ready for drawing
+
+  draw_string(54, 25, "PASTRY BOY 2", 12);
+  draw_string(10, 14, "PLAY", 4);
+  draw_string(10, 8, "VIEW SCORES", 11);
+  draw_string(10, 1, "ABOUT", 5);
+  draw_string(1, (menuOptionSelected * -6) + 20, "^", 1);
+  
+  display_image(0, screen_data); //display the image on the screen
+}
+
+void level_menu()
+{
+  clear_screen();
+}
+
+void creators_point_of_view()
+{
+  draw_string(1, 1, "WE WORK HARD", 13);
+  draw_string(1, 7, "WE WORK HARD", 13);
+  draw_string(1, 15, "WE WORK HARD", 13);
+}
+
+void master_game_update()
+{
+  apply_gravity();
+  find_collisions();
+  handle_collisions();
+  game_update();
+  apply_velocities();
+
+  clear_screen(); //clear screen to make it ready for drawing
+  draw_objects(); //draw gameobjects
+
+  char string[10] = {0};
+  get_int_as_string(gameCounter, string, sizeof(string));
+  draw_string(1, 26, "PASTRY BOY 2", 12);
+
+  display_image(0, screen_data); //display the image on the screen
 }
 
 void get_int_as_string(int value, char string[], int length)
@@ -105,6 +148,7 @@ void load_scene(int level, int scene)
 
   gameObjectsLength = get_level_scene_length(level, scene);
 
+  switchStartState = getsw() & 0x1;
   load_level_scene(gameObjects, level, scene);
   player = &gameObjects[0];
 
@@ -135,7 +179,8 @@ void start(void)
 
   TRISD |= 0x7f;
 
-  load_scene(currentLevel, currentScene);
+  menuScreen = 1;
+  menuOptionSelected = 1;
 }
 
 void game_update() //will run every time the timer ticks
@@ -146,7 +191,14 @@ void game_update() //will run every time the timer ticks
 
   int buttons = getbtns();
   int btn1 = getbtn1();
+  int sw = getsw();
 
+  if((sw & 0x1) != switchStartState)
+  {
+    clear_background();
+    menuScreen = 1;
+  }
+  
   if(btn1 & 0x2) //button 4 is pressed
   {
     if(player->graphicIndex != 3 && kickCooldown <= 0)
@@ -205,6 +257,46 @@ void game_update() //will run every time the timer ticks
   if(player->graphicIndex == 3 && kickTimeCounter <= 0)
   {
     set_object_graphic(player, 0);
+  }
+}
+
+void menu_logic_update()
+{
+  menuOptionChangeCooldown--;
+
+  int buttons = getbtns();
+  int btn1 = getbtn1();
+  
+  if(btn1 & 0x2) //button 4 is pressed
+  {
+    
+  }
+
+  if (buttons & 0x1) //button 3 is pressed
+  {
+    if(menuOptionSelected == 1)
+    {
+      menuScreen = 0;
+      load_scene(currentLevel, currentScene);
+    }
+  }
+
+  if (buttons & 0x2) //button 2 is pressed
+  {
+    if(menuOptionChangeCooldown < 0 && menuOptionSelected > 1)
+    {
+      menuOptionSelected--;
+      menuOptionChangeCooldown = 30;
+    }
+  }
+
+  if (buttons & 0x4) //button 1 is pressed
+  {
+    if(menuOptionChangeCooldown < 0 && menuOptionSelected < 3)
+    {
+      menuOptionSelected++;
+      menuOptionChangeCooldown = 30;
+    }
   }
 }
 

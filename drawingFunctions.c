@@ -76,6 +76,8 @@ void draw_character(int x, int y, char character)
     charIndex = character - 65 + 12; //capital letters
   else if(character == 32)
     charIndex = 11; //white space
+  else if(character == 94)
+    charIndex = 38;
   else
     charIndex = 10; //unsupported character
 
