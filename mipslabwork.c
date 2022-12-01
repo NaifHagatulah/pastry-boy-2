@@ -59,7 +59,7 @@ void queue_graphic_change(GameObject *gameObject, int newGraphicIndex, int delay
 void perform_queued_graphic_change();
 void set_object_graphic(GameObject *gameObject, int graphicIndex);
 void master_game_update();
-void main_menu_update();
+void main_menu_draw();
 void menu_logic_update();
 
 void user_isr(void)
@@ -76,22 +76,29 @@ void user_isr(void)
       if(menuScreen == 1)
       {
         menu_logic_update();
-        main_menu_update();
+        main_menu_draw();
       }
     }
   }
   return;
 }
 
-void main_menu_update()
+void main_menu_draw()
 {
+  if(menuOptionSelected == 0)
+  {
+    clear_background();
+    clear_screen();
+    return;
+  }
+
   clear_screen(); //clear screen to make it ready for drawing
 
-  draw_string(54, 25, "PASTRY BOY 2", 12);
-  draw_string(10, 14, "PLAY", 4);
-  draw_string(10, 8, "VIEW SCORES", 11);
-  draw_string(10, 1, "ABOUT", 5);
-  draw_string(1, (menuOptionSelected * -6) + 20, "^", 1);
+  draw_string(54, 25, "PASTRY BOY 2", 12, 0);
+  draw_string(10, 14, "PLAY", 4, 0);
+  draw_string(10, 8, "VIEW SCORES", 11, 0);
+  draw_string(10, 1, "ABOUT", 5, 0);
+  draw_string(1, (menuOptionSelected * -6) + 20, "^", 1, 0);
   
   display_image(0, screen_data); //display the image on the screen
 }
@@ -103,9 +110,9 @@ void level_menu()
 
 void creators_point_of_view()
 {
-  draw_string(1, 1, "WE WORK HARD", 13);
-  draw_string(1, 7, "WE WORK HARD", 13);
-  draw_string(1, 15, "WE WORK HARD", 13);
+  draw_string(1, 1, "WE WORK HARD", 13, 1);
+  draw_string(1, 7, "WE WORK HARD", 13, 1);
+  draw_string(1, 15, "WE WORK HARD", 13, 1);
 }
 
 void master_game_update()
@@ -119,9 +126,8 @@ void master_game_update()
   clear_screen(); //clear screen to make it ready for drawing
   draw_objects(); //draw gameobjects
 
-  char string[10] = {0};
-  get_int_as_string(gameCounter, string, sizeof(string));
-  draw_string(1, 26, "PASTRY BOY 2", 12);
+  //char string[10] = {0};
+  //get_int_as_string(gameCounter, string, sizeof(string));
 
   display_image(0, screen_data); //display the image on the screen
 }
@@ -141,10 +147,25 @@ void get_int_as_string(int value, char string[], int length)
   }  
 }
 
+void write_scene_specific_texts(int level, int scene)
+{
+  if(level == 0 && scene == 0)
+  {
+    draw_string(1, 26, "BUTTONS [1[2[3[4", 16, 1);
+  }
+  else if(level == 0 && scene == 1)
+  {
+    draw_string(1, 26, "[4 ATTACK", 9, 1);
+  }
+}
+
 void load_scene(int level, int scene)
 { 
+  clear_background();
   currentLevel = level;
   currentScene = scene;
+
+  write_scene_specific_texts(level, scene);
 
   gameObjectsLength = get_level_scene_length(level, scene);
 
@@ -152,7 +173,6 @@ void load_scene(int level, int scene)
   load_level_scene(gameObjects, level, scene);
   player = &gameObjects[0];
 
-  clear_background();
   int i;
   for (i = 0; i < gameObjectsLength; i++) //render to background
   {
@@ -185,6 +205,7 @@ void start(void)
 
 void game_update() //will run every time the timer ticks
 {
+  *porte = player->health;
   gameCounter++;
   kickCooldown--;
   kickTimeCounter--;
@@ -276,6 +297,7 @@ void menu_logic_update()
   {
     if(menuOptionSelected == 1)
     {
+      clear_background();
       menuScreen = 0;
       load_scene(currentLevel, currentScene);
     }
@@ -507,9 +529,28 @@ void handle_dog_side_collision(Collision *collision)
 {
   if(collision->objectTwo->type == 1) //player
   {
-    collision->objectTwo->xPosition = 5;
-    collision->objectTwo->yPosition = 8;
-    collision->objectOne->disabled = 1;
+
+    if(collision->objectTwo->graphicIndex == 3)
+    {
+      collision->objectOne->health = collision->objectOne->health - 1;
+      collision->objectOne->xVelocity = collision->objectOne->xVelocity * -1;
+      collision->objectOne->yVelocity = 5;
+      if(collision->objectOne->health == 0)
+      {
+        collision->objectOne->disabled = 1;
+      }
+    }
+    else if (collision->objectTwo->graphicIndex != 3)
+    {
+      collision->objectTwo->health = collision->objectTwo->health - 1;
+      collision->objectTwo->xPosition = 5;
+      collision->objectTwo->yPosition = 8; 
+      if(collision->objectTwo->health == 0)
+      {
+        collision->objectOne->disabled = 1;
+      }
+    }
+
   }
   else
   {

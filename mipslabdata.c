@@ -535,6 +535,24 @@ char letter_arrow[] =
 	1, 1, 0, 0, 0,
 };
 
+char letter_button[] = 
+{
+	0, 1, 1, 1, 0,
+	1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1,
+	0, 1, 1, 1, 0,
+};
+
+char letter_switch[] =
+{
+	1, 0, 0, 1, 0,
+	1, 0, 1, 0, 0,
+	1, 1, 0, 0, 0,
+	1, 0, 0, 0, 0,
+	1, 0, 0, 0, 0,
+};
+
 char* characters[] = 
 {
 	number_0,
@@ -576,4 +594,6 @@ char* characters[] =
 	letter_y,
 	letter_z,
 	letter_arrow,
+	letter_button,
+	letter_switch,
 };

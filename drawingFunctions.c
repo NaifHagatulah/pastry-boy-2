@@ -66,7 +66,7 @@ void drawGraphic(int x, int y, int width, int height, char* graphic, char mirror
   } 
 }
 
-void draw_character(int x, int y, char character)
+void draw_character(int x, int y, char character, int canvasIndex)
 {
   char charIndex = 0;
 
@@ -76,21 +76,25 @@ void draw_character(int x, int y, char character)
     charIndex = character - 65 + 12; //capital letters
   else if(character == 32)
     charIndex = 11; //white space
-  else if(character == 94)
+  else if(character == 94) // ^ to write the menu arrow
     charIndex = 38;
+  else if(character == 91) // [ to write the button icon
+    charIndex = 39;
+  else if(character == 92) // ] to write the switch icon
+    charIndex = 40;
   else
     charIndex = 10; //unsupported character
 
-  drawGraphic(x, y, 5, 5, characters[charIndex], 0, 0);
+  drawGraphic(x, y, 5, 5, characters[charIndex], 0, canvasIndex);
 }
 
-void draw_string(int x, int y, char* string, int length)
+void draw_string(int x, int y, char* string, int length, int canvasIndex)
 {
   int currentOffset = 0;
   int i;
   for (i = 0; i < length; i++)
   {
-    draw_character(x + currentOffset, y, string[i]);
+    draw_character(x + currentOffset, y, string[i], canvasIndex);
     currentOffset += 6;
   }
 }
