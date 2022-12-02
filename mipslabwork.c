@@ -8,6 +8,7 @@
 const double JUMP_FORCE = 0.4;
 const double GRAVITY_FORCE = 0.008;
 const double MOVE_SPEED = 0.3;
+const int INVINCIBILIY_TIME = 50;
 
 unsigned int tickValue = 0x1;
 volatile int *trise = (volatile int *)0xbf886100;
@@ -61,6 +62,7 @@ void set_object_graphic(GameObject *gameObject, int graphicIndex);
 void master_game_update();
 void main_menu_draw();
 void menu_logic_update();
+void invert_binary_value(char *value);
 
 void user_isr(void)
 { 
@@ -225,8 +227,8 @@ void game_update() //will run every time the timer ticks
     if(player->graphicIndex != 3 && kickCooldown <= 0)
     {
       set_object_graphic(player, 3);
-      kickCooldown = 100;
-      kickTimeCounter = 30;
+      kickCooldown = 80;
+      kickTimeCounter = 60;
     }
   }
 
@@ -278,6 +280,18 @@ void game_update() //will run every time the timer ticks
   if(player->graphicIndex == 3 && kickTimeCounter <= 0)
   {
     set_object_graphic(player, 0);
+  }
+  
+  int i;
+  for(i = 0; i < gameObjectsLength; i++)
+  {
+    gameObjects[i].invincibilityCounter -= 1;
+
+    if(gameObjects[i].health > 0)
+      gameObjects[i].forcedMovement = 0;
+
+    if(gameObjects[i].yPosition < -10)
+      gameObjects[i].disabled = 1;
   }
 }
 
@@ -529,16 +543,15 @@ void handle_dog_side_collision(Collision *collision)
 {
   if(collision->objectTwo->type == 1) //player
   {
-
-    if(collision->objectTwo->graphicIndex == 3)
+    if(collision->objectTwo->graphicIndex == 3 && collision->objectOne->invincibilityCounter <= 0) // graphicIndex 3 = kick
     {
-      collision->objectOne->health = collision->objectOne->health - 1;
-      collision->objectOne->xVelocity = collision->objectOne->xVelocity * -1;
-      collision->objectOne->yVelocity = 5;
-      if(collision->objectOne->health == 0)
-      {
-        collision->objectOne->disabled = 1;
-      }
+      collision->objectOne->health -= 1;
+      collision->objectOne->xVelocity *= -1;
+      collision->objectOne->yPosition += 0.5;
+      collision->objectOne->yVelocity = 0.5;
+      collision->objectOne->forcedMovement = 1;
+      invert_binary_value(&collision->objectOne->is_mirrored);
+      collision->objectOne->invincibilityCounter = INVINCIBILIY_TIME;
     }
     else if (collision->objectTwo->graphicIndex != 3)
     {
@@ -550,7 +563,6 @@ void handle_dog_side_collision(Collision *collision)
         collision->objectOne->disabled = 1;
       }
     }
-
   }
   else
   {
@@ -568,7 +580,7 @@ void handle_collisions()
   int i = 0;
   for (i = 0; i < collisionsLength; i++)
   {
-    if(collisions[i].objectOne->usePhysics == 1)
+    if(collisions[i].objectOne->usePhysics == 1 && collisions[i].objectOne->forcedMovement == 0)
     {
       char side = get_collision_side(&collisions[i]);
 
@@ -650,4 +662,14 @@ void perform_queued_graphic_change()
 {
   set_object_graphic(graphicChangeTarget, graphicChangeNewIndex);
   graphicChangeTime = 0;
+}
+
+void invert_binary_value(char *value)
+{
+  if(*value == 1)
+  {
+    *value = 0;
+    return;
+  }
+  *value = 1;
 }
