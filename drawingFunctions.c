@@ -18,13 +18,13 @@ void setPixel(int x, int y, char value, int canvasIndex)
 	int blockPosition = x + ((y / 8) * 128);
 	char block = canvases[canvasIndex][blockPosition];
 
-	block &= ~(1 << (y % 8));
+	//block &= ~(1 << (y % 8));
 
   if(value > 0)
   {
     block |= 1 << (y % 8);
   }
-
+  
 	canvases[canvasIndex][blockPosition] = block;
 }
 
@@ -46,7 +46,7 @@ void clear_screen()
   }
 }
 
-void drawGraphic(int x, int y, int width, int height, char* graphic, char mirrored, int canvasIndex)
+void drawGraphic(int x, int y, int width, int height, char* graphic, char mirrored, char transparent, int canvasIndex)
 {
   int i;
   int j;
@@ -61,7 +61,12 @@ void drawGraphic(int x, int y, int width, int height, char* graphic, char mirror
         
     for (j = 0; j < height; j++)
     {
-      setPixel(drawX, (y + height) - j, graphic[i + j * (width)], canvasIndex);
+      char newPixelValue = graphic[i + j * (width)];
+
+      if(transparent && j % 2 == 0)
+        transparent = 0;
+
+      setPixel(drawX, (y + height) - j, newPixelValue, canvasIndex);
     }  
   } 
 }
@@ -85,7 +90,7 @@ void draw_character(int x, int y, char character, int canvasIndex)
   else
     charIndex = 10; //unsupported character
 
-  drawGraphic(x, y, 5, 5, characters[charIndex], 0, canvasIndex);
+  drawGraphic(x, y, 5, 5, characters[charIndex], 0, 0, canvasIndex);
 }
 
 void draw_string(int x, int y, char* string, int length, int canvasIndex)
@@ -101,7 +106,11 @@ void draw_string(int x, int y, char* string, int length, int canvasIndex)
 
 void draw_game_object(GameObject *gameObject, int canvasIndex)
 {
-  drawGraphic((int)gameObject->xPosition, (int)gameObject->yPosition, imageSizes[gameObject->graphicIndex][0], imageSizes[gameObject->graphicIndex][1], images[gameObject->graphicIndex], gameObject->is_mirrored, canvasIndex);  
+  char transparent = 0;
+  if(gameObject->invincibilityCounter > 0)
+    transparent = 1;
+
+  drawGraphic((int)gameObject->xPosition, (int)gameObject->yPosition, imageSizes[gameObject->graphicIndex][0], imageSizes[gameObject->graphicIndex][1], images[gameObject->graphicIndex], gameObject->is_mirrored, transparent, canvasIndex);  
 }
 
 int get_game_object_width(GameObject *gameObject)

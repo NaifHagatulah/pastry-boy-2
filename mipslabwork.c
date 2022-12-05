@@ -22,6 +22,7 @@ int gameCounter = 1;
 int displayUpdateCounter = 0;
 double timeScale = 1;
 int switchStartState = 0;
+int keys = 0;
 
 extern uint8_t screen_data[512];
 extern char player_default[88];
@@ -44,6 +45,8 @@ int graphicChangeNewIndex;
 
 int kickCooldown = 0;
 int kickTimeCounter = 0;
+char playerIsOnDoor = 0;
+GameObject *door;
 
 void apply_velocities();
 void find_collisions();
@@ -207,7 +210,7 @@ void start(void)
 
 void game_update() //will run every time the timer ticks
 {
-  *porte = player->health;
+  //*porte = player->health;
   gameCounter++;
   kickCooldown--;
   kickTimeCounter--;
@@ -229,6 +232,13 @@ void game_update() //will run every time the timer ticks
       set_object_graphic(player, 3);
       kickCooldown = 80;
       kickTimeCounter = 60;
+
+      *porte = playerIsOnDoor;
+      if(playerIsOnDoor || keys == 0)
+      {
+        set_object_graphic(door, 5);
+        queue_graphic_change(door, 4, 300);
+      }
     }
   }
 
@@ -450,7 +460,7 @@ int get_collision(GameObject *object1, GameObject *object2, Collision *collision
   double otherRight = object2->xPosition + get_game_object_width(object2);
   double otherTop = object2->yPosition + get_game_object_height(object2);
   double otherBottom = object2->yPosition;
-  
+
   if (otherLeft >= thisLeft && otherLeft <= thisRight && otherRight >= thisRight)
   {
       double xOverlap = thisRight - otherLeft;
@@ -577,9 +587,28 @@ void handle_dog_side_collision(Collision *collision)
 
 void handle_collisions()
 {
+  playerIsOnDoor = 0;
+
   int i = 0;
   for (i = 0; i < collisionsLength; i++)
   {
+    if(collisions[i].objectOne->type == 4 || collisions[i].objectTwo->type == 4) //one object is door
+    {
+      if(collisions[i].objectOne->type == 1 || collisions[i].objectTwo->type == 1) //one object is player
+      {
+        playerIsOnDoor = 1;
+        if(collisions[i].objectOne->type == 4) //object one is the door
+        {
+          door = collisions[i].objectOne;
+        }
+        else //object two is the door
+        {
+          door = collisions[i].objectTwo;
+        }
+        continue;
+      }
+    }
+    
     if(collisions[i].objectOne->usePhysics == 1 && collisions[i].objectOne->forcedMovement == 0)
     {
       char side = get_collision_side(&collisions[i]);
@@ -627,7 +656,8 @@ char get_collision_side(Collision *collision)
   double center_collision_overlap_y = collision->yPosition + (collision->height / 2);
   double x_diff = center_collision_overlap_x - object_center_x;
   double y_diff = center_collision_overlap_y - object_center_y;
-    if (collision->height > collision->width)
+ 
+  if (collision->height > collision->width)
   {
     if (x_diff > 0) //Rightside collision on the side
       return 1;

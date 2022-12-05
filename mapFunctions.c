@@ -38,6 +38,11 @@ void load_level_scene(GameObject sceneArray[], int level, int scene)
             sceneArray[index].usePhysics = 1;
             sceneArray[index].xVelocity = -0.15;
             sceneArray[index].health = 3;
-        };
+        }
+        else if(number == 4) //door
+        {
+            sceneArray[index].graphicIndex = 4;
+            sceneArray[index].usePhysics = 0;
+        }
     }
 }
