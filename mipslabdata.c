@@ -102,6 +102,7 @@ int scene_01_02[] =
 	2, 96, 0,
 	2, 104, 0,
 	2, 104, 4,
+	5, 104, 9,
 };
 
 int* level_01[] = 
@@ -113,7 +114,7 @@ int* level_01[] =
 int level_01_sizes[] = 
 {
 	23,
-	21,
+	22,
 };
 //level 01 ^^
 
@@ -135,6 +136,7 @@ uint8_t imageSizes[][2] =
 	{ 9, 11 },
 	{ 17, 18},
 	{ 28, 27 },
+	{ 4, 9 },
 };
 
 char player_default[] = 
@@ -238,7 +240,20 @@ char door_speach[] =
 	1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-char* images[] = { player_default, baby_block_01, small_dog, player_kick, door, door_speach };
+char key[] = 
+{
+	0, 1, 1, 0,
+	1, 0, 0, 1,
+	1, 0, 0, 1,
+	0, 1, 1, 0,
+	0, 1, 0, 0,
+	0, 1, 0, 0,
+	0, 1, 1, 0,
+	0, 1, 0, 0,
+	0, 1, 1, 0,
+};
+
+char* images[] = { player_default, baby_block_01, small_dog, player_kick, door, door_speach, key };
 
 char number_0[] = 
 {

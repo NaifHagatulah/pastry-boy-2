@@ -44,5 +44,10 @@ void load_level_scene(GameObject sceneArray[], int level, int scene)
             sceneArray[index].graphicIndex = 4;
             sceneArray[index].usePhysics = 0;
         }
+        else if(number == 5) //key
+        {
+            sceneArray[index].graphicIndex = 6;
+            sceneArray[index].usePhysics = 1;
+        }
     }
 }

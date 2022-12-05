@@ -592,7 +592,7 @@ void handle_collisions()
   int i = 0;
   for (i = 0; i < collisionsLength; i++)
   {
-    if(collisions[i].objectOne->type == 4 || collisions[i].objectTwo->type == 4) //one object is door
+    if(collisions[i].objectOne->type == 4 || collisions[i].objectTwo->type == 4) //one obect is door
     {
       if(collisions[i].objectOne->type == 1 || collisions[i].objectTwo->type == 1) //one object is player
       {
@@ -609,6 +609,25 @@ void handle_collisions()
       }
     }
     
+    if(collisions[i].objectOne->type == 5 || collisions[i].objectTwo->type == 5) //one object is key
+    {
+      if(collisions[i].objectOne->type == 1 || collisions[i].objectTwo->type == 1)//one object is player
+      {
+        keys++;
+        
+        if(collisions[i].objectOne->type == 5)
+        {
+          collisions[i].objectOne->disabled = 1;
+        }
+        else
+        {
+          collisions->objectTwo->disabled = 1;
+        }
+
+        continue;
+      }
+    }
+
     if(collisions[i].objectOne->usePhysics == 1 && collisions[i].objectOne->forcedMovement == 0)
     {
       char side = get_collision_side(&collisions[i]);
