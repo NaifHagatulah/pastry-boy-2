@@ -128,6 +128,12 @@ int* level_scene_sizes[] =
 	level_01_sizes
 };
 
+int number_of_scenes[] =
+{
+	2,
+	2,
+};
+
 uint8_t imageSizes[][2] =
 {
 	{ 8, 11 },

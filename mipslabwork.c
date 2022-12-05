@@ -1,5 +1,6 @@
 #include <stdint.h>  /* Declarations of uint_32 and the like */
 #include <pic32mx.h> /* Declarations of system-specific addresses etc */
+#include <stdlib.h>
 #include "mipslab.h" /* Declatations for these labs */
 #include "drawingFunctions.h"
 #include "Collision.h"
@@ -29,9 +30,10 @@ extern char player_default[88];
 extern char baby_block_01[32];
 extern char* images[2];
 extern uint8_t imageSizes[][2];
+extern int number_of_scenes[];
 
 GameObject *player;
-GameObject gameObjects[32];
+GameObject gameObjects[32*4];
 int gameObjectsLength;
 int currentScene;
 int currentLevel;
@@ -164,18 +166,34 @@ void write_scene_specific_texts(int level, int scene)
   }
 }
 
-void load_scene(int level, int scene)
+void load_level(int level)
+{
+  currentLevel = level;
+  currentScene = 0;
+  
+  levelSceneObjects = (GameObject**)malloc(sizeof(GameObject*) * number_of_scenes[currentLevel]);
+
+  int i;
+  for(i = 0; i < number_of_scenes[currentLevel]; i++)
+  {
+    
+  }
+
+  gameObjects = levelSceneObjects[currentScene];
+}
+
+void load_scene(int scene)
 { 
   clear_background();
-  currentLevel = level;
   currentScene = scene;
+  gameObjects = levelSceneObjects[currentScene];
 
-  write_scene_specific_texts(level, scene);
+  write_scene_specific_texts(currentLevel, scene);
 
-  gameObjectsLength = get_level_scene_length(level, scene);
+  gameObjectsLength = get_level_scene_length(currentLevel, scene);
 
   switchStartState = getsw() & 0x1;
-  load_level_scene(gameObjects, level, scene);
+  load_level_scene(gameObjects, currentLevel, scene);
   player = &gameObjects[0];
 
   int i;
@@ -323,7 +341,8 @@ void menu_logic_update()
     {
       clear_background();
       menuScreen = 0;
-      load_scene(currentLevel, currentScene);
+      load_level(0);
+      load_scene(0);
     }
   }
 
@@ -419,7 +438,7 @@ void go_to_next_scene()
 {
   int yPosition = player->yPosition;
   int yVelocity = player->yVelocity;
-  load_scene(0, 1);
+  load_scene(1); //needs to be fixed, should not be hardcoded
   player->yPosition = yPosition;
   player->xPosition = 2;
   player->yVelocity = yVelocity;
@@ -429,7 +448,7 @@ void go_to_previous_scene()
 {
   int yPosition = player->yPosition;
   int yVelocity = player->yVelocity;
-  load_scene(0, 0);
+  load_scene(0);
   player->yPosition = yPosition;
   player->xPosition = 110;
   player->yVelocity = yVelocity;
@@ -440,12 +459,6 @@ void die()
   player->xPosition = 2;
   player->yPosition = 5;
   player->yVelocity = 0;
-}
-
-double abs(double value)
-{
-  if(value < 0)
-    return -value;
 }
 
 int get_collision(GameObject *object1, GameObject *object2, Collision *collision)
