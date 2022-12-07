@@ -33,7 +33,8 @@ extern uint8_t imageSizes[][2];
 extern int number_of_scenes[];
 
 GameObject *player;
-GameObject gameObjects[32*4];
+GameObject levelSceneObjects[32*4];
+GameObject *gameObjects;
 int gameObjectsLength;
 int currentScene;
 int currentLevel;
@@ -171,22 +172,19 @@ void load_level(int level)
   currentLevel = level;
   currentScene = 0;
   
-  levelSceneObjects = (GameObject**)malloc(sizeof(GameObject*) * number_of_scenes[currentLevel]);
-
   int i;
-  for(i = 0; i < number_of_scenes[currentLevel]; i++)
+  for(i = 0; i < 32 * 4; i++)
   {
-    
+    //reset all objects
+    levelSceneObjects[i].disabled = 0;
   }
-
-  gameObjects = levelSceneObjects[currentScene];
 }
 
 void load_scene(int scene)
 { 
   clear_background();
   currentScene = scene;
-  gameObjects = levelSceneObjects[currentScene];
+  gameObjects = &levelSceneObjects[32 * currentScene];
 
   write_scene_specific_texts(currentLevel, scene);
 
@@ -575,6 +573,11 @@ void handle_dog_side_collision(Collision *collision)
       collision->objectOne->forcedMovement = 1;
       invert_binary_value(&collision->objectOne->is_mirrored);
       collision->objectOne->invincibilityCounter = INVINCIBILIY_TIME;
+      
+      if(collision->objectOne->health <= 0)
+      {
+        collision->objectOne->disabled = 1;
+      }
     }
     else if (collision->objectTwo->graphicIndex != 3)
     {

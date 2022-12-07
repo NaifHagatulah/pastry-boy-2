@@ -21,10 +21,6 @@ void load_level_scene(GameObject sceneArray[], int level, int scene)
         int number = levels[level][scene][index * 3];
 
         sceneArray[index].type = number;
-        sceneArray[index].disabled = 0;
-        sceneArray[index].usePhysics = 0;
-        sceneArray[index].xVelocity = 0;
-        sceneArray[index].yVelocity = 0;
         
         if(number == 1) //player
         {
