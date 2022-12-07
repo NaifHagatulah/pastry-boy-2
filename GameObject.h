@@ -16,6 +16,7 @@ typedef struct GameObject
   int health;
   int invincibilityCounter;
   char forcedMovement;
+  char hasBeenLoaded;
 } GameObject;
 
 #endif

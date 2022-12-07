@@ -177,6 +177,7 @@ void load_level(int level)
   {
     //reset all objects
     levelSceneObjects[i].disabled = 0;
+    levelSceneObjects[i].hasBeenLoaded = 0;
   }
 }
 
@@ -235,6 +236,8 @@ void game_update() //will run every time the timer ticks
   int btn1 = getbtn1();
   int sw = getsw();
 
+  *porte = keys;
+
   if((sw & 0x1) != switchStartState)
   {
     clear_background();
@@ -249,11 +252,19 @@ void game_update() //will run every time the timer ticks
       kickCooldown = 80;
       kickTimeCounter = 60;
 
-      *porte = playerIsOnDoor;
-      if(playerIsOnDoor || keys == 0)
+      if(playerIsOnDoor)
       {
-        set_object_graphic(door, 5);
-        queue_graphic_change(door, 4, 300);
+        if(keys == 0)
+        {
+          set_object_graphic(door, 5);
+          queue_graphic_change(door, 4, 300);
+        }
+        else
+        {
+          keys = 0;
+          playerIsOnDoor = 0;
+          load_level(currentLevel + 1);
+        }
       }
     }
   }
@@ -629,7 +640,7 @@ void handle_collisions()
     {
       if(collisions[i].objectOne->type == 1 || collisions[i].objectTwo->type == 1)//one object is player
       {
-        keys++;
+        keys = keys + 1;
         
         if(collisions[i].objectOne->type == 5)
         {

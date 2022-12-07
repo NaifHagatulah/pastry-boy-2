@@ -15,12 +15,16 @@ void load_level_scene(GameObject sceneArray[], int level, int scene)
     int index;
     for(index = 0; index < length; index++)
     {
+        if(sceneArray[index].hasBeenLoaded)
+            continue;
+
         sceneArray[index].xPosition = levels[level][scene][index * 3 + 1];
         sceneArray[index].yPosition = levels[level][scene][index * 3 + 2];
 
         int number = levels[level][scene][index * 3];
 
         sceneArray[index].type = number;
+        sceneArray[index].hasBeenLoaded = 1;
         
         if(number == 1) //player
         {
