@@ -15,36 +15,35 @@ unsigned int tickValue = 0x1;
 volatile int *trise = (volatile int *)0xbf886100;
 volatile int *porte = (volatile int *)0xbf886110;
 
-int menuOptionChangeCooldown = 0;
-int menuOptionSelected = 0;
-int menuScreen = 0;
+char menuOptionChangeCooldown = 0;
+char menuOptionSelected = 0;
+char menuScreen = 0;
 int ticks = 0;
-int gameCounter = 1;
-int displayUpdateCounter = 0;
+char gameCounter = 1;
+char displayUpdateCounter = 0;
 double timeScale = 1;
-int switchStartState = 0;
-int keys = 0;
+char switchStartState = 0;
+char keys = 0;
 
 extern uint8_t screen_data[512];
 extern char player_default[88];
 extern char baby_block_01[32];
 extern char* images[2];
 extern uint8_t imageSizes[][2];
-extern int number_of_scenes[];
 
 GameObject *player;
 GameObject levelSceneObjects[32*4];
 GameObject *gameObjects;
-int gameObjectsLength;
-int currentScene;
-int currentLevel;
+char gameObjectsLength;
+char currentScene;
+char currentLevel;
 
 Collision collisions[100];
-int collisionsLength;
+char collisionsLength;
 
 int graphicChangeTime = 0;
 GameObject *graphicChangeTarget;
-int graphicChangeNewIndex;
+char graphicChangeNewIndex;
 
 int kickCooldown = 0;
 int kickTimeCounter = 0;
@@ -236,8 +235,6 @@ void game_update() //will run every time the timer ticks
   int btn1 = getbtn1();
   int sw = getsw();
 
-  *porte = keys;
-
   if((sw & 0x1) != switchStartState)
   {
     clear_background();
@@ -256,14 +253,15 @@ void game_update() //will run every time the timer ticks
       {
         if(keys == 0)
         {
-          set_object_graphic(door, 5);
-          queue_graphic_change(door, 4, 300);
+           set_object_graphic(door, 5);
+           queue_graphic_change(door, 4, 300);
         }
         else
         {
           keys = 0;
           playerIsOnDoor = 0;
           load_level(currentLevel + 1);
+          load_scene(currentScene);
         }
       }
     }
@@ -447,7 +445,7 @@ void go_to_next_scene()
 {
   int yPosition = player->yPosition;
   int yVelocity = player->yVelocity;
-  load_scene(1); //needs to be fixed, should not be hardcoded
+  load_scene(currentScene + 1); //needs to be fixed, should not be hardcoded
   player->yPosition = yPosition;
   player->xPosition = 2;
   player->yVelocity = yVelocity;
@@ -457,7 +455,7 @@ void go_to_previous_scene()
 {
   int yPosition = player->yPosition;
   int yVelocity = player->yVelocity;
-  load_scene(0);
+  load_scene(currentScene -1);
   player->yPosition = yPosition;
   player->xPosition = 110;
   player->yVelocity = yVelocity;

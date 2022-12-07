@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include "GameObject.h"
 
-extern int** levels[];
-extern int* level_scene_sizes[];
+extern char** levels[];
+extern char* level_scene_sizes[];
 
 int get_level_scene_length(int level, int scene)
 {
