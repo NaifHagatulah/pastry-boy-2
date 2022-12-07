@@ -574,13 +574,15 @@ void handle_dog_side_collision(Collision *collision)
   if(collision->objectTwo->type == 1) //player
   {
     if(collision->objectTwo->graphicIndex == 3 && collision->objectOne->invincibilityCounter <= 0) // graphicIndex 3 = kick
-    {
+    { //player is kicking the dog
       collision->objectOne->health -= 1;
+
       collision->objectOne->xVelocity *= -1;
       collision->objectOne->yPosition += 0.5;
       collision->objectOne->yVelocity = 0.5;
       collision->objectOne->forcedMovement = 1;
       invert_binary_value(&collision->objectOne->is_mirrored);
+
       collision->objectOne->invincibilityCounter = INVINCIBILIY_TIME;
       
       if(collision->objectOne->health <= 0)
@@ -588,14 +590,26 @@ void handle_dog_side_collision(Collision *collision)
         collision->objectOne->disabled = 1;
       }
     }
-    else if (collision->objectTwo->graphicIndex != 3)
+    else if (collision->objectTwo->graphicIndex != 3 && collision->objectOne->invincibilityCounter <= 0)
     {
       collision->objectTwo->health = collision->objectTwo->health - 1;
-      collision->objectTwo->xPosition = 5;
-      collision->objectTwo->yPosition = 8; 
+
+      //player
+      collision->objectTwo->yPosition += 0.3;
+      collision->objectTwo->yVelocity += 0.5;
+      collision->objectTwo->forcedMovement = 1;
+      collision->objectOne->invincibilityCounter = INVINCIBILIY_TIME;
+
+      //dog
+      collision->objectOne->xVelocity *= -1;
+      collision->objectOne->yPosition += 0.2;
+      collision->objectOne->yVelocity = 0.2;
+      invert_binary_value(&collision->objectOne->is_mirrored);
+      collision->objectOne->forcedMovement = 1;
+
       if(collision->objectTwo->health == 0)
       {
-        collision->objectOne->disabled = 1;
+        collision->objectTwo->disabled = 1;
       }
     }
   }
