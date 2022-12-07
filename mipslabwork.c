@@ -30,6 +30,7 @@ extern char player_default[88];
 extern char baby_block_01[32];
 extern char* images[2];
 extern uint8_t imageSizes[][2];
+extern char number_of_scenes[2];
 
 GameObject *player;
 GameObject levelSceneObjects[32*4];
@@ -68,6 +69,7 @@ void master_game_update();
 void main_menu_draw();
 void menu_logic_update();
 void invert_binary_value(char *value);
+void view_scores_draw();
 
 void user_isr(void)
 { 
@@ -84,6 +86,11 @@ void user_isr(void)
       {
         menu_logic_update();
         main_menu_draw();
+      }
+      if(menuScreen == 2)
+      {
+        menu_logic_update();
+        view_scores_draw();
       }
     }
   }
@@ -105,6 +112,17 @@ void main_menu_draw()
   draw_string(10, 14, "PLAY", 4, 0);
   draw_string(10, 8, "VIEW SCORES", 11, 0);
   draw_string(10, 1, "ABOUT", 5, 0);
+  draw_string(1, (menuOptionSelected * -6) + 20, "^", 1, 0);
+  
+  display_image(0, screen_data); //display the image on the screen
+}
+
+void view_scores_draw()
+{
+  clear_screen(); //clear screen to make it ready for drawing
+
+  draw_string(10, 14, "PLAY", 4, 0);
+  draw_string(54, 25, "PASTRY BOY 2", 12, 0);
   draw_string(1, (menuOptionSelected * -6) + 20, "^", 1, 0);
   
   display_image(0, screen_data); //display the image on the screen
@@ -133,8 +151,13 @@ void master_game_update()
   clear_screen(); //clear screen to make it ready for drawing
   draw_objects(); //draw gameobjects
 
-  //char string[10] = {0};
-  //get_int_as_string(gameCounter, string, sizeof(string));
+  // char string[10] = {0};
+  // get_int_as_string(currentScene, string, sizeof(string));
+  // draw_string(1, 10, string, 10, 0);
+
+  // char string2[10] = {0};
+  // get_int_as_string(number_of_scenes[currentLevel], string2, sizeof(string2));
+  // draw_string(1, 16, string2, 10, 0);
 
   display_image(0, screen_data); //display the image on the screen
 }
@@ -158,11 +181,11 @@ void write_scene_specific_texts(int level, int scene)
 {
   if(level == 0 && scene == 0)
   {
-    draw_string(1, 26, "BUTTONS [1[2[3[4", 16, 1);
+    //draw_string(1, 26, "BUTTONS [1[2[3[4", 16, 1);
   }
   else if(level == 0 && scene == 1)
   {
-    draw_string(1, 26, "[4 ATTACK", 9, 1);
+    //draw_string(1, 26, "[4 ATTACK", 9, 1);
   }
 }
 
@@ -226,7 +249,7 @@ void start(void)
 
 void game_update() //will run every time the timer ticks
 {
-  //*porte = player->health;
+  *porte = number_of_scenes[currentLevel];
   gameCounter++;
   kickCooldown--;
   kickTimeCounter--;
@@ -298,6 +321,11 @@ void game_update() //will run every time the timer ticks
     player->xPosition = 0;
   }
 
+  if(currentScene == number_of_scenes[currentLevel] - 1 && player->xPosition >= 120) //128 - player width (8) = 120
+  {
+    player->xPosition = 120;
+  }
+
   if(player->xPosition > 128)
   {
     go_to_next_scene();
@@ -344,12 +372,20 @@ void menu_logic_update()
 
   if (buttons & 0x1) //button 3 is pressed
   {
-    if(menuOptionSelected == 1)
+    if(menuScreen == 1)
     {
-      clear_background();
-      menuScreen = 0;
-      load_level(0);
-      load_scene(0);
+      if(menuOptionSelected == 1)
+      {
+        clear_background();
+        menuScreen = 0;
+        load_level(0);
+        load_scene(0);
+      }
+      if(menuOptionSelected == 2)
+      {
+        clear_background();
+        menuScreen = 2;
+      }
     }
   }
 
@@ -443,22 +479,28 @@ void find_collisions()
 
 void go_to_next_scene()
 {
-  int yPosition = player->yPosition;
-  int yVelocity = player->yVelocity;
-  load_scene(currentScene + 1); //needs to be fixed, should not be hardcoded
-  player->yPosition = yPosition;
-  player->xPosition = 2;
-  player->yVelocity = yVelocity;
+  if(currentScene < number_of_scenes[currentLevel] - 1)
+  {
+    int yPosition = player->yPosition;
+    int yVelocity = player->yVelocity;
+    load_scene(currentScene + 1); //needs to be fixed, should not be hardcoded
+    player->yPosition = yPosition;
+    player->xPosition = 2;
+    player->yVelocity = yVelocity;
+  }
 }
 
 void go_to_previous_scene()
 {
-  int yPosition = player->yPosition;
-  int yVelocity = player->yVelocity;
-  load_scene(currentScene -1);
-  player->yPosition = yPosition;
-  player->xPosition = 110;
-  player->yVelocity = yVelocity;
+  if(currentScene > 0)
+  {
+    int yPosition = player->yPosition;
+    int yVelocity = player->yVelocity;
+    load_scene(currentScene - 1);
+    player->yPosition = yPosition;
+    player->xPosition = 110;
+    player->yVelocity = yVelocity;
+  }
 }
 
 void die()
@@ -466,6 +508,7 @@ void die()
   player->xPosition = 2;
   player->yPosition = 5;
   player->yVelocity = 0;
+  player->health--;
 }
 
 int get_collision(GameObject *object1, GameObject *object2, Collision *collision)
