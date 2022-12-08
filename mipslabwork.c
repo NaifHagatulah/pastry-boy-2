@@ -23,6 +23,7 @@ int gameCounter = 1;
 int displayUpdateCounter = 0;
 double timeScale = 1;
 char switchStartState = 0;
+char switchStartState2 = 0;
 char keys = 0;
 int gravityDirection = 1;
 
@@ -219,6 +220,8 @@ void load_scene(int scene)
   gameObjectsLength = get_level_scene_length(currentLevel, scene);
 
   switchStartState = getsw() & 0x1;
+  switchStartState2 = getsw() & 0x01;
+
   load_level_scene(gameObjects, currentLevel, scene);
   player = &gameObjects[0];
 
@@ -267,6 +270,15 @@ void game_update() //will run every time the timer ticks
   {
     clear_background();
     menuScreen = 1;
+  }
+
+  if((sw & 0x01) != switchStartState2)
+  {
+    gravityDirection = -1;
+  }
+  else
+  {
+    gravityDirection = 1;
   }
   
   if(btn1 & 0x2) //button 4 is pressed
@@ -445,7 +457,7 @@ void apply_gravity()
     if(gameObjects[index].usePhysics == 1)
     {
       gameObjects[index].grounded = 0; //reset grounded every frame
-      gameObjects[index].yVelocity -= GRAVITY_FORCE * timeScale; //apply gravity
+      gameObjects[index].yVelocity -= GRAVITY_FORCE * timeScale * gravityDirection; //apply gravity
     }
   }
 }
