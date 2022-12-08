@@ -30,7 +30,7 @@ void load_level_scene(GameObject sceneArray[], int level, int scene)
         {
             sceneArray[index].graphicIndex = 0; // 0 is player default
             sceneArray[index].usePhysics = 1;
-            sceneArray[index].health = 10;
+            sceneArray[index].health = 3;
         }
         else if(number == 2) //small block
         {

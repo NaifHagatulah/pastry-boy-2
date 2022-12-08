@@ -5,6 +5,7 @@
 #include "drawingFunctions.h"
 #include "Collision.h"
 #include "mapFunctions.h"
+#include  "playerScore.h"
 
 const double JUMP_FORCE = 0.4;
 const double GRAVITY_FORCE = 0.008;
@@ -26,6 +27,8 @@ char switchStartState = 0;
 char switchStartState2 = 0;
 char keys = 0;
 int gravityDirection = 1;
+char maxMenuOption = 3;
+char currentScore = 0;
 
 extern uint8_t screen_data[512];
 extern char player_default[88];
@@ -34,6 +37,10 @@ extern char* images[2];
 extern uint8_t imageSizes[][2];
 extern char number_of_scenes[2];
 
+char currentNameInput[3];
+char currentNameInputIndex;
+
+PlayerScore scores[3];
 GameObject *player;
 GameObject levelSceneObjects[32*4];
 GameObject *gameObjects;
@@ -72,6 +79,12 @@ void main_menu_draw();
 void menu_logic_update();
 void invert_binary_value(char *value);
 void view_scores_draw();
+void death_screen_draw();
+void go_to_main_menu();
+void draw_enter_name_screen();
+void go_to_enter_name_screen();
+void save_name();
+void sort_scores();
 
 void user_isr(void)
 { 
@@ -82,17 +95,27 @@ void user_isr(void)
     IFSCLR(0) = 0x100;
     if (displayUpdateCounter % 20 == 0)
     {
-      if(menuScreen == 0)
+      if(menuScreen == 0) // no menu screen, in game
         master_game_update();
-      if(menuScreen == 1)
+      else if(menuScreen == 1) // main menu
       {
         menu_logic_update();
         main_menu_draw();
       }
-      if(menuScreen == 2)
+      else if(menuScreen == 2) // high score screen
       {
         menu_logic_update();
         view_scores_draw();
+      }
+      else if(menuScreen == 3) // deathscreen option to save score or not
+      {
+        menu_logic_update();
+        death_screen_draw();
+      }
+      else if(menuScreen == 4) // choose name screen
+      {
+        menu_logic_update();
+        draw_enter_name_screen();
       }
     }
   }
@@ -119,13 +142,49 @@ void main_menu_draw()
   display_image(0, screen_data); //display the image on the screen
 }
 
+void draw_enter_name_screen()
+{
+  clear_screen(); //clear screen to make it ready for drawing
+
+  draw_string(5, 25, "CHOOSE YOUR NAME", 16, 0);        //alfabete is from <= 65 <= 90
+  draw_string(10, 14, currentNameInput, 3, 0);
+  draw_string(10 + currentNameInputIndex * 5, 8, "*", 1, 0);
+  draw_string(100, 2, "[4 OK", 5, 0);
+
+  display_image(0, screen_data); //display the image on the screen
+}
+
+void death_screen_draw()
+{
+  clear_screen(); //clear screen to make it ready for drawing
+
+  draw_string(20, 25, "MR PASTRY DIED", 14, 0);
+  draw_string(10, 15, "SAVE SCORE?", 11, 0);
+  draw_string(10, 8, "YES", 3, 0);
+  draw_string(10, 2, "NO", 2, 0);
+  draw_string(1, (menuOptionSelected * -6) + 14, "^", 1, 0);
+  
+  display_image(0, screen_data); //display the image on the screen
+}
+
 void view_scores_draw()
 {
   clear_screen(); //clear screen to make it ready for drawing
 
-  draw_string(10, 14, "PLAY", 4, 0);
-  draw_string(54, 25, "PASTRY BOY 2", 12, 0);
-  draw_string(1, (menuOptionSelected * -6) + 20, "^", 1, 0);
+  char i;
+  for(i = 0; i < 3; i++)
+  {
+    char height = 18 - i * 6;
+    char scoreString[5] = {0};
+
+    if(scores[i].hasValue)
+      get_int_as_string(scores[i].score, scoreString, sizeof(scoreString));
+
+    draw_string(25, height, scoreString, 5, 0);
+    draw_string(2, height, scores[i].name, 3, 0);
+  }
+
+  //draw_string(1, (menuOptionSelected * -6) + 20, "^", 1, 0);
   
   display_image(0, screen_data); //display the image on the screen
 }
@@ -251,6 +310,13 @@ void start(void)
 
   TRISD |= 0x7f;
 
+  go_to_main_menu();
+}
+
+void go_to_main_menu()
+{
+  clear_background();
+  maxMenuOption = 3;
   menuScreen = 1;
   menuOptionSelected = 1;
 }
@@ -268,8 +334,7 @@ void game_update() //will run every time the timer ticks
 
   if((sw & 0x1) != switchStartState)
   {
-    clear_background();
-    menuScreen = 1;
+    go_to_main_menu();
   }
 
   if((sw & 0x01) != switchStartState2)
@@ -330,7 +395,14 @@ void game_update() //will run every time the timer ticks
 
   if(player->yPosition < -8)
   {
-    die();
+    player->xPosition = 2;
+    player->yPosition = 5;
+    player->yVelocity = 0;
+    player->health--;
+    if(player->health <= 0 )
+    {
+      die();
+    }
   }
 
   if(currentScene == 0 && player->xPosition <= 0)
@@ -375,54 +447,174 @@ void game_update() //will run every time the timer ticks
   }
 }
 
+void copy_current_name(char target[], char origin[])
+{
+  target[0] = origin[0];
+  target[1] = origin[1];
+  target[2] = origin[2];
+}
+
+void insert_score(char index)
+{
+  scores[index].hasValue = true;
+  scores[index].score = currentScore;
+  copy_current_name(scores[index].name, currentNameInput);
+}
+
+void save_name()
+{
+  if(scores[2].hasValue)
+  {
+    if(currentScore > scores[2].score)
+    {
+      insert_score(2);
+    }
+  }
+  else
+  {
+    insert_score(2);
+  }
+
+  sort_scores();
+}
+
+void sort_scores()
+{
+  char temp_score;
+  char temp_name[3];
+  char i; 
+  char j;
+  char k;
+  for (i = 0; i < 3; i++)
+  {
+    for(j = i; j < 3; j++)
+    {
+      if(scores[i].score < scores[j].score)
+      {
+        temp_score = scores[i].score;
+        copy_current_name(temp_name, scores[i].name);
+        copy_current_name(scores[i].name, scores[j].name);
+        scores[i].score = scores[j].score;
+        copy_current_name(scores[j].name, temp_name);
+        scores[j].score = temp_score;
+      }
+    }
+  }
+}
+
 void menu_logic_update()
 {
   menuOptionChangeCooldown--;
 
   int buttons = getbtns();
   int btn1 = getbtn1();
-  
+
   if(btn1 & 0x2) //button 4 is pressed
   {
-    
+    if(menuScreen == 4)
+    {
+      save_name();
+      go_to_main_menu();
+    }
   }
 
   if (buttons & 0x1) //button 3 is pressed
   {
-    if(menuScreen == 1)
+    if(menuOptionChangeCooldown <= 0)
     {
-      if(menuOptionSelected == 1)
+      if(menuScreen == 1)
       {
-        clear_background();
-        menuScreen = 0;
-        load_level(0);
-        load_scene(0);
+        if(menuOptionSelected == 1)
+        {
+          clear_background();
+          menuScreen = 0;
+          load_level(0);
+          load_scene(0);
+        }
+        if(menuOptionSelected == 2)
+        {
+          clear_background();
+          menuScreen = 2;
+        }
       }
-      if(menuOptionSelected == 2)
+      else if(menuScreen == 3)
       {
-        clear_background();
-        menuScreen = 2;
+        if(menuOptionSelected == 1)
+        {
+          go_to_enter_name_screen();
+        }
+        if(menuOptionSelected == 2)
+        {
+          
+        }
+      }
+      else if(menuScreen == 4)
+      {
+        currentNameInputIndex++;
+
+        if(currentNameInputIndex > 2)
+          currentNameInputIndex = 0;
       }
     }
+
+    menuOptionChangeCooldown = 30;
   }
 
   if (buttons & 0x2) //button 2 is pressed
   {
-    if(menuOptionChangeCooldown < 0 && menuOptionSelected > 1)
+    if(menuOptionChangeCooldown < 0)
     {
-      menuOptionSelected--;
+      if(menuScreen == 4) //is entering name
+      {
+        currentNameInput[currentNameInputIndex] = currentNameInput[currentNameInputIndex] + 1;
+        if(currentNameInput[currentNameInputIndex] > 90)
+        {
+          currentNameInput[currentNameInputIndex] = 65;
+        }  
+
+        menuOptionChangeCooldown = 30;
+      }
+      else if(menuOptionSelected > 1) //is not entering name, limit menu option to not be less than 1
+      {
+        menuOptionSelected--;
+      }
+
       menuOptionChangeCooldown = 30;
     }
   }
 
   if (buttons & 0x4) //button 1 is pressed
   {
-    if(menuOptionChangeCooldown < 0 && menuOptionSelected < 3)
+    if(menuOptionChangeCooldown < 0)
     {
-      menuOptionSelected++;
+      if(menuScreen == 4) //is entering name
+      {
+        currentNameInput[currentNameInputIndex] = currentNameInput[currentNameInputIndex] - 1;;
+        if(currentNameInput[currentNameInputIndex] < 65)
+        {
+          currentNameInput[currentNameInputIndex] = 90;
+        }
+        
+        menuOptionChangeCooldown = 30;
+      }
+      else if(menuOptionSelected < maxMenuOption) //is not entering name, check so we are not at max menu option
+      {
+        menuOptionSelected++;
+      }
+
       menuOptionChangeCooldown = 30;
     }
   }
+}
+
+void go_to_enter_name_screen()
+{
+  currentNameInput[0] = 65;
+  currentNameInput[1] = 65;
+  currentNameInput[2] = 65;
+  currentNameInputIndex = 0;
+  menuScreen = 4;
+  menuOptionSelected = 1;
 }
 
 void draw_objects(void) //will run every 100th time timer ticks
@@ -522,10 +714,10 @@ void go_to_previous_scene()
 
 void die()
 {
-  player->xPosition = 2;
-  player->yPosition = 5;
-  player->yVelocity = 0;
-  player->health--;
+  menuOptionSelected = 1;
+  menuScreen = 3;
+  maxMenuOption = 2;
+  clear_background();
 }
 
 int get_collision(GameObject *object1, GameObject *object2, Collision *collision)
@@ -670,6 +862,7 @@ void handle_dog_side_collision(Collision *collision)
       if(collision->objectTwo->health == 0)
       {
         collision->objectTwo->disabled = 1;
+        die();
       }
     }
   }

@@ -87,6 +87,10 @@ void draw_character(int x, int y, char character, int canvasIndex)
     charIndex = 39;
   else if(character == 92) // ] to write the switch icon
     charIndex = 40;
+  else if(character == 63) // question mark
+    charIndex = 41;
+  else if(character == 42) // * to draw up arrow
+    charIndex = 42;
   else
     charIndex = 10; //unsupported character
 

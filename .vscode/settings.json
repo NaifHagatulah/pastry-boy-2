@@ -1,7 +1,9 @@
 {
     "files.associations": {
         "mipslab.h": "c",
-        "gameobject.h": "c"
+        "gameobject.h": "c",
+        "playerScore.C": "cpp",
+        "playerScore.H": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
