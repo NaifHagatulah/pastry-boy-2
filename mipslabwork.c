@@ -19,11 +19,12 @@ char menuOptionChangeCooldown = 0;
 char menuOptionSelected = 0;
 char menuScreen = 0;
 int ticks = 0;
-char gameCounter = 1;
-char displayUpdateCounter = 0;
+int gameCounter = 1;
+int displayUpdateCounter = 0;
 double timeScale = 1;
 char switchStartState = 0;
 char keys = 0;
+int gravityDirection = 1;
 
 extern uint8_t screen_data[512];
 extern char player_default[88];
@@ -200,6 +201,10 @@ void load_level(int level)
     //reset all objects
     levelSceneObjects[i].disabled = 0;
     levelSceneObjects[i].hasBeenLoaded = 0;
+    levelSceneObjects[i].usePhysics = 0;
+    levelSceneObjects[i].xVelocity = 0;
+    levelSceneObjects[i].yVelocity = 0;
+    levelSceneObjects[i].is_mirrored = 0;
   }
 }
 
