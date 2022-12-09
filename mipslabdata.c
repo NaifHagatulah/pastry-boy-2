@@ -721,6 +721,15 @@ char letter_arrow_up[] =
 	0, 0, 0, 0, 0,
 };
 
+char letter_line[] = 
+{
+	0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0,
+	0, 1, 1, 1, 0,
+	0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0,
+};
+
 char* characters[] = 
 {
 	number_0,
@@ -766,4 +775,5 @@ char* characters[] =
 	letter_switch,
 	letter_question,
 	letter_arrow_up,
+	letter_line,
 };

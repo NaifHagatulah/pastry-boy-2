@@ -2,6 +2,6 @@ typedef struct PlayerScore
 {
     char hasValue;
     char score;
-    char name[];
+    char name[3];
 } PlayerScore;
 

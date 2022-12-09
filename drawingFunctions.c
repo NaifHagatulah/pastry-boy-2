@@ -91,6 +91,8 @@ void draw_character(int x, int y, char character, int canvasIndex)
     charIndex = 41;
   else if(character == 42) // * to draw up arrow
     charIndex = 42;
+  else if(character == 45) // -
+    charIndex == 45;
   else
     charIndex = 10; //unsupported character
 

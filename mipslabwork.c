@@ -6,7 +6,6 @@
 #include "Collision.h"
 #include "mapFunctions.h"
 #include  "playerScore.h"
-#include <string.h> // Memset, initalize and change elements in array
 
 const double JUMP_FORCE = 0.4;
 const double GRAVITY_FORCE = 0.008;
@@ -86,6 +85,7 @@ void draw_enter_name_screen();
 void go_to_enter_name_screen();
 void save_name();
 void sort_scores();
+void copy_current_name(char target[], char origin[]);
 
 void user_isr(void)
 { 
@@ -174,24 +174,27 @@ void view_scores_draw()
 
   char i;
   for(i = 0; i < 3; i++)
-  {
-    char scoreMemset[5];
-    memset(scoreMemset, 0, 5*sizeof(scoreMemset[0])); //set all value to 0
-    
-    char height = 18 - i * 6;
-    char scoreString[5] = {0};
+  {  
+    char height = 15 - i * 6;
+    char scoreString[5] = {' ', ' ', ' ', ' ', ' '};
 
-    if(scores[i].hasValue)
+    if(scores[i].hasValue == 1)
     {
       get_int_as_string(scores[i].score, scoreString, sizeof(scoreString));
+
+      draw_string(25, height, scoreString, 5, 0);
+      draw_string(5, height, scores[i].name, 3, 0);
     } 
-
-    draw_string(25, height, scoreString, 5, 0);
-    draw_string(2, height, scores[i].name, 3, 0);
+    else
+    {
+      draw_string(25, height, "-----", 5, 0);
+      draw_string(5, height, "---", 3, 0);
+    }
   }
-
-  //draw_string(1, (menuOptionSelected * -6) + 20, "^", 1, 0);
   
+  draw_string(2, 26, "TOP 3 PLAYERS", 13, 0);
+  draw_string(84, 2, "[4 BACK", 7, 0);
+
   display_image(0, screen_data); //display the image on the screen
 }
 
@@ -258,6 +261,9 @@ void write_scene_specific_texts(int level, int scene)
 
 void load_level(int level)
 {
+  if(level == 0)
+    currentScore = 0;
+
   currentLevel = level;
   currentScene = 0;
   
@@ -329,7 +335,7 @@ void go_to_main_menu()
 
 void game_update() //will run every time the timer ticks
 {
-  *porte = number_of_scenes[currentLevel];
+  *porte = currentScore;
   gameCounter++;
   kickCooldown--;
   kickTimeCounter--;
@@ -371,6 +377,7 @@ void game_update() //will run every time the timer ticks
         {
           keys = 0;
           playerIsOnDoor = 0;
+          currentScore += 5;
           load_level(currentLevel + 1);
           load_scene(currentScene);
         }
@@ -462,21 +469,14 @@ void copy_current_name(char target[], char origin[])
 
 void insert_score(char index)
 {
-  scores[index].hasValue = true;
+  scores[index].hasValue = 1;
   scores[index].score = currentScore;
   copy_current_name(scores[index].name, currentNameInput);
 }
 
 void save_name()
 {
-  if(scores[2].hasValue)
-  {
-    if(currentScore > scores[2].score)
-    {
-      insert_score(2);
-    }
-  }
-  else
+  if(scores[2].hasValue == 0 || currentScore > scores[2].score)
   {
     insert_score(2);
   }
@@ -487,24 +487,33 @@ void save_name()
 void sort_scores()
 {
   char temp_score;
+  char temp_hasValue;
   char temp_name[3];
   char i; 
   char j;
-  char k;
+  char min;
   for (i = 0; i < 3; i++)
   {
-    for(j = i; j < 3; j++)
+    min = i;
+    for(j = i + 1; j < 3; j++)
     {
-      if(scores[i].score < scores[j].score)
+      if(scores[j].score > scores[min].score || scores[min].hasValue == 0)
       {
-        temp_score = scores[i].score;
-        copy_current_name(temp_name, scores[i].name);
-        copy_current_name(scores[i].name, scores[j].name);
-        scores[i].score = scores[j].score;
-        copy_current_name(scores[j].name, temp_name);
-        scores[j].score = temp_score;
+        min = j;
       }
     }
+
+    temp_score = scores[i].score;
+    copy_current_name(temp_name, scores[i].name);
+    temp_hasValue = scores[i].hasValue;
+
+    copy_current_name(scores[i].name, scores[min].name);
+    scores[i].score = scores[min].score;
+    scores[i].hasValue = scores[min].hasValue;
+
+    copy_current_name(scores[min].name, temp_name);
+    scores[min].score = temp_score;
+    scores[min].hasValue = temp_hasValue;
   }
 }
 
@@ -520,6 +529,10 @@ void menu_logic_update()
     if(menuScreen == 4)
     {
       save_name();
+      go_to_main_menu();
+    }
+    if(menuScreen == 2)
+    {
       go_to_main_menu();
     }
   }
@@ -551,7 +564,7 @@ void menu_logic_update()
         }
         if(menuOptionSelected == 2)
         {
-          
+          go_to_main_menu();
         }
       }
       else if(menuScreen == 4)
@@ -724,7 +737,6 @@ void die()
   menuScreen = 3;
   maxMenuOption = 2;
   clear_background();
-  currentScore = currentLevel;
 }
 
 int get_collision(GameObject *object1, GameObject *object2, Collision *collision)
@@ -843,10 +855,12 @@ void handle_dog_side_collision(Collision *collision)
       invert_binary_value(&collision->objectOne->is_mirrored);
 
       collision->objectOne->invincibilityCounter = INVINCIBILIY_TIME;
+      currentScore++;
       
       if(collision->objectOne->health <= 0)
       {
         collision->objectOne->disabled = 1;
+        currentScore += 3;
       }
     }
     else if (collision->objectTwo->graphicIndex != 3 && collision->objectOne->invincibilityCounter <= 0)
@@ -913,6 +927,7 @@ void handle_collisions()
       if(collisions[i].objectOne->type == 1 || collisions[i].objectTwo->type == 1)//one object is player
       {
         keys = keys + 1;
+        currentScore += 1;
         
         if(collisions[i].objectOne->type == 5)
         {
