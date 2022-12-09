@@ -182,7 +182,9 @@ void view_scores_draw()
     char scoreString[5] = {0};
 
     if(scores[i].hasValue)
-      get_int_as_string(scores[i].score, scoreString, sizeof(scoreString) / sizeof(scoreString[0]) );
+    {
+      get_int_as_string(scores[i].score, scoreString, sizeof(scoreString));
+    } 
 
     draw_string(25, height, scoreString, 5, 0);
     draw_string(2, height, scores[i].name, 3, 0);
@@ -722,6 +724,7 @@ void die()
   menuScreen = 3;
   maxMenuOption = 2;
   clear_background();
+  currentScore = currentLevel;
 }
 
 int get_collision(GameObject *object1, GameObject *object2, Collision *collision)
