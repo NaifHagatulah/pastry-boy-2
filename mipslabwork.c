@@ -6,6 +6,7 @@
 #include "Collision.h"
 #include "mapFunctions.h"
 #include  "playerScore.h"
+#include <string.h> // Memset, initalize and change elements in array
 
 const double JUMP_FORCE = 0.4;
 const double GRAVITY_FORCE = 0.008;
@@ -174,11 +175,14 @@ void view_scores_draw()
   char i;
   for(i = 0; i < 3; i++)
   {
+    char scoreMemset[5];
+    memset(scoreMemset, 0, 5*sizeof(scoreMemset[0])); //set all value to 0
+    
     char height = 18 - i * 6;
     char scoreString[5] = {0};
 
     if(scores[i].hasValue)
-      get_int_as_string(scores[i].score, scoreString, sizeof(scoreString));
+      get_int_as_string(scores[i].score, scoreString, sizeof(scoreString) / sizeof(scoreString[0]) );
 
     draw_string(25, height, scoreString, 5, 0);
     draw_string(2, height, scores[i].name, 3, 0);
