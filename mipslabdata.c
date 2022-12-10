@@ -189,22 +189,83 @@ char level_02_sizes[] =
 };
 //level 02 ^^
 
+//level 03 VVV
+char scene_03_01[] =
+{
+	1, 5, 6,
+	2, 0, 0,
+	2, 8, 0,
+	2, 14, 4,
+	2, 16, 0,
+	2, 24, 0,
+	3, 25, 5,
+	3, 40, 5,
+	2, 32, 0,
+	2, 40, 0,
+	2, 48, 0,
+	2, 56, 0,
+	2, 64, 0,
+	2, 72, 0,
+	2, 80, 0,
+	2, 88, 0,
+	2, 91, 4,
+	2, 96, 0,
+	2, 99, 4,
+	2, 104, 0,
+	2, 120, 0,
+};
+
+char scene_03_02[] =
+{
+	1, 5, 6,
+	2, 0, 0,
+	2, 8, 0,
+	2, 16, 0,
+	2, 24, 0,
+	2, 32, 0,
+	2, 40, 0,
+	2, 48, 0,
+	2, 56, 4,
+	2, 56, 0,
+	2, 64, 8,
+	2, 64, 4,
+	2, 64, 0,
+	2, 72, 8,
+};
+
+char* level_03[] = 
+{
+	scene_03_01,
+	scene_03_02,
+};
+
+char level_03_sizes[] = 
+{
+	21,
+	14,
+};
+//level 03 ^^
+
+
 char** levels[] =
 {
 	level_01,
 	level_02,
+	level_03,
 };
 
 char* level_scene_sizes[] =
 {
 	level_01_sizes,
 	level_02_sizes,
+	level_03_sizes,
 };
 
-char number_of_scenes[2] = 
+char number_of_scenes[3] = 
 {
 	2,
 	3,
+	2,
 };
 
 uint8_t imageSizes[][2] =
